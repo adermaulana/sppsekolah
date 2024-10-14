@@ -91,6 +91,18 @@ if($_SESSION['status'] != 'login'){
           </div>
         </div>
       </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#kelas" aria-expanded="true"
+          aria-controls="kelas">
+          <i class="fas fa-fw fa-table"></i>
+          <span>Data Kelas</span>
+        </a>
+        <div id="kelas" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+
+          </div>
+        </div>
+      </li>
     </ul>
     <!-- Sidebar -->
     <div id="content-wrapper" class="d-flex flex-column">
@@ -104,8 +116,8 @@ if($_SESSION['status'] != 'login'){
             <li class="nav-item dropdown no-arrow">
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
-                <img class="img-profile rounded-circle" src="img/boy.png" style="max-width: 60px">
-                <span class="ml-2 d-none d-lg-inline text-white small">Maman Ketoprak</span>
+                <img class="img-profile rounded-circle" src="../assets/img/boy.png" style="max-width: 60px">
+                <span class="ml-2 d-none d-lg-inline text-white small"><?= $_SESSION['nama_admin'] ?></span>
               </a>
               <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                 <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#logoutModal">

@@ -131,6 +131,18 @@ if (isset($_POST['simpan'])) {
           </div>
         </div>
       </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#kelas" aria-expanded="true"
+          aria-controls="kelas">
+          <i class="fas fa-fw fa-table"></i>
+          <span>Data Kelas</span>
+        </a>
+        <div id="kelas" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+
+          </div>
+        </div>
+      </li>
     </ul>
     <!-- Sidebar -->
     <div id="content-wrapper" class="d-flex flex-column">
