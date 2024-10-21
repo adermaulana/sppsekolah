@@ -13,6 +13,47 @@ if($_SESSION['status'] != 'login'){
 
 }
 
+if (isset($_POST['simpan'])) {
+    // Insert into orangtua_221043 table first
+    $namaOrtu = $_POST['namaortu'];
+    $emailOrtu = $_POST['emailortu'];
+    $passwordOrtu = md5($_POST['passwordortu']); // Hash the password
+
+    $insertOrtu = mysqli_query($koneksi, "INSERT INTO orangtua_221043 (nama_221043, email_221043, password_221043) VALUES ('$namaOrtu', '$emailOrtu', '$passwordOrtu')");
+
+    if ($insertOrtu) {
+        // Get the id of the inserted orangtua
+        $idOrtu = mysqli_insert_id($koneksi);
+
+        // Now insert into siswa_221043 table
+        $namaSiswa = $_POST['nama'];
+        $emailSiswa = $_POST['email'];
+        $kelas = $_POST['kelas'];
+        $alamat = $_POST['alamat'];
+        $passwordSiswa = md5($_POST['password']); // Hash the password for siswa
+
+        $insertSiswa = mysqli_query($koneksi, "INSERT INTO siswa_221043 (nama_221043, email_221043, kelas_221043, alamat_221043, password_221043, orangtua_id_221043) VALUES ('$namaSiswa', '$emailSiswa', '$kelas', '$alamat', '$passwordSiswa', '$idOrtu')");
+
+        if ($insertSiswa) {
+            echo "<script>
+                    alert('Simpan data siswa dan orang tua sukses!');
+                    document.location='siswa.php';
+                </script>";
+        } else {
+            echo "<script>
+                    alert('Simpan data siswa gagal!');
+                    document.location='tambahsiswa.php';
+                </script>";
+        }
+    } else {
+        echo "<script>
+                alert('Simpan data orang tua gagal!');
+                document.location='tambahsiswa.php';
+            </script>";
+    }
+}
+
+
 ?>
 
 
@@ -134,68 +175,48 @@ if($_SESSION['status'] != 'login'){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Siswa</h1>
+            <h1 class="h3 mb-0 text-gray-800">Tambah Kelas</h1>
           </div>
 
-          <!-- Row -->
           <div class="row">
-            <!-- Datatables -->
-            <div class="col-lg-12">
-              <div class="card mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                  <a class="btn btn-success" href="tambahsiswa.php">Tambah Data</a>
-                </div>
-                <div class="table-responsive p-3">
-                  <table class="table align-items-center table-flush" id="dataTable">
-                    <thead class="thead-light">
-                      <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Orang Tua</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tfoot>
-                      <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Orang Tua</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </tfoot>
-                    <tbody>
-                    <?php
-                            $no = 1;
-                            $tampil = mysqli_query($koneksi, "
-                                                        SELECT siswa_221043.*, orangtua_221043.nama_221043 AS nama_orang_tua
-                                                        FROM siswa_221043 
-                                                        JOIN orangtua_221043 ON siswa_221043.orangtua_id_221043 = orangtua_221043.id_221043
-                                                    ");
-                            while($data = mysqli_fetch_array($tampil)):
-                        ?>
-                      <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['nama_221043'] ?></td>
-                        <td><?= $data['kelas_221043'] ?></td>
-                        <td><?= $data['nama_orang_tua'] ?></td>
-                        <td>
-                            <a class="btn btn-warning" href="">Edit</a>
-                            <a class="btn btn-danger" href="">Hapus</a>
-                        </td>
-                      </tr>
-                      <?php
-                            endwhile; 
-                        ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+  <div class="col-lg-12">
+    <!-- Form Basic -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <!-- Form start -->
+        <form method="POST">
+          <div class="row">
+            <!-- Siswa Section (Left Column) -->
+            <div class="col-lg-6">            
+            <!-- Kelas Select -->
+            <div class="form-group">
+                <label for="password">Nama Kelas</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Kelas" required>
             </div>
+            
 
+            </div>
           </div>
-          <!--Row-->
+          <!-- Single Submit Button -->
+          <button type="submit" name="simpan" class="btn btn-primary">Submit</button>
+        </form>
+        <!-- Form end -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+          <!-- Documentation Link -->
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <p>For more documentations you can visit<a href="https://getbootstrap.com/docs/4.3/components/forms/"
+                  target="_blank">
+                  bootstrap forms documentations.</a> and <a
+                  href="https://getbootstrap.com/docs/4.3/components/input-group/" target="_blank">bootstrap input
+                  groups documentations</a></p>
+            </div>
+          </div>
 
           <!-- Modal Logout -->
           <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabelLogout"
@@ -219,7 +240,7 @@ if($_SESSION['status'] != 'login'){
             </div>
           </div>
 
-        </div>
+      </div>
         <!---Container Fluid-->
       </div>
       <!-- Footer -->

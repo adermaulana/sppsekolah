@@ -134,7 +134,7 @@ if($_SESSION['status'] != 'login'){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Siswa</h1>
+            <h1 class="h3 mb-0 text-gray-800">Data Kelas</h1>
           </div>
 
           <!-- Row -->
@@ -143,51 +143,36 @@ if($_SESSION['status'] != 'login'){
             <div class="col-lg-12">
               <div class="card mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                  <a class="btn btn-success" href="tambahsiswa.php">Tambah Data</a>
+                  <a class="btn btn-success" href="tambahkelas.php">Tambah Data</a>
                 </div>
                 <div class="table-responsive p-3">
                   <table class="table align-items-center table-flush" id="dataTable">
                     <thead class="thead-light">
                       <tr>
                         <th>No</th>
-                        <th>Nama</th>
                         <th>Kelas</th>
-                        <th>Orang Tua</th>
                         <th>Aksi</th>
                       </tr>
                     </thead>
                     <tfoot>
                       <tr>
                         <th>No</th>
-                        <th>Nama</th>
                         <th>Kelas</th>
-                        <th>Orang Tua</th>
                         <th>Aksi</th>
                       </tr>
                     </tfoot>
                     <tbody>
-                    <?php
-                            $no = 1;
-                            $tampil = mysqli_query($koneksi, "
-                                                        SELECT siswa_221043.*, orangtua_221043.nama_221043 AS nama_orang_tua
-                                                        FROM siswa_221043 
-                                                        JOIN orangtua_221043 ON siswa_221043.orangtua_id_221043 = orangtua_221043.id_221043
-                                                    ");
-                            while($data = mysqli_fetch_array($tampil)):
-                        ?>
+
                       <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['nama_221043'] ?></td>
-                        <td><?= $data['kelas_221043'] ?></td>
-                        <td><?= $data['nama_orang_tua'] ?></td>
+                        <td>1</td>
+                        <td>Kelas 1</td>
+
                         <td>
                             <a class="btn btn-warning" href="">Edit</a>
                             <a class="btn btn-danger" href="">Hapus</a>
                         </td>
                       </tr>
-                      <?php
-                            endwhile; 
-                        ?>
+
                     </tbody>
                   </table>
                 </div>

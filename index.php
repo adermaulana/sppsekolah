@@ -17,6 +17,16 @@
                                     WHERE `username_221043` = '$username'
                                     AND `password_221043` = '$password'");
         $cek = mysqli_num_rows($login);
+
+        $loginOrangtua = mysqli_query($koneksi, "SELECT * FROM `orangtua_221043`
+                                    WHERE `username_221043` = '$username'
+                                    AND `password_221043` = '$password'");
+        $cekOrangtua = mysqli_num_rows($loginOrangtua);
+
+        $loginSiswa = mysqli_query($koneksi, "SELECT * FROM `siswa_221043`
+                                    WHERE `username_221043` = '$username'
+                                    AND `password_221043` = '$password'");
+        $cekSiswa = mysqli_num_rows($loginSiswa);
     
         if ($cek > 0) {
             // Ambil data user
@@ -28,7 +38,27 @@
             $_SESSION['status'] = "login";
             // Redirect ke halaman admin
             header('location:admin');
-        } else {
+        } else if ($cekOrangtua > 0) {
+          // Ambil data user
+          $admin_data = mysqli_fetch_assoc($loginOrangtua);
+          // Simpan data ke dalam session
+          $_SESSION['id_orangtua'] = $admin_data['id_221043']; // Pastikan sesuai dengan nama kolom di database
+          $_SESSION['nama_orangtua'] = $admin_data['nama_221043']; // Pastikan sesuai dengan nama kolom di database
+          $_SESSION['username_orangtua'] = $username;
+          $_SESSION['status'] = "login";
+          // Redirect ke halaman admin
+          header('location:orangtua');
+      } else if ($cekSiswa > 0) {
+        // Ambil data user
+        $admin_data = mysqli_fetch_assoc($loginSiswa);
+        // Simpan data ke dalam session
+        $_SESSION['id_siswa'] = $admin_data['id_221043']; // Pastikan sesuai dengan nama kolom di database
+        $_SESSION['nama_siswa'] = $admin_data['nama_221043']; // Pastikan sesuai dengan nama kolom di database
+        $_SESSION['username_siswa'] = $username;
+        $_SESSION['status'] = "login";
+        // Redirect ke halaman admin
+        header('location:siswa');
+    } else {
             echo "<script>
                 alert('Login Gagal, Periksa Username dan Password Anda!');
                 window.location.href = 'index.php';

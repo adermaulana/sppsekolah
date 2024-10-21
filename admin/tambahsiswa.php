@@ -115,7 +115,8 @@ if (isset($_POST['simpan'])) {
         </a>
         <div id="collapseForm" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-
+          <a class="collapse-item" href="spp.php">Data Spp</a>
+          <a class="collapse-item" href="tambahspp.php">Tambah Spp</a>
           </div>
         </div>
       </li>
@@ -127,7 +128,7 @@ if (isset($_POST['simpan'])) {
         </a>
         <div id="collapseTable" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-
+          <a class="collapse-item" href="pembayaran.php">Data Pembayaran</a>
           </div>
         </div>
       </li>
@@ -139,7 +140,8 @@ if (isset($_POST['simpan'])) {
         </a>
         <div id="kelas" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-
+            <a class="collapse-item" href="kelas.php">Data Kelas</a>
+            <a class="collapse-item" href="tambahkelas.php">Tambah Kelas</a>
           </div>
         </div>
       </li>
@@ -195,12 +197,6 @@ if (isset($_POST['simpan'])) {
             <div class="form-group">
                 <label for="nama">Nama</label>
                 <input type="text" class="form-control" name="nama" id="nama" placeholder="Enter Nama" required>
-            </div>
-            
-            <!-- Email Input -->
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
             </div>
 
             <!-- Kelas Select -->
@@ -287,13 +283,13 @@ if (isset($_POST['simpan'])) {
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-outline-primary" data-dismiss="modal">Cancel</button>
-                  <a href="login.html" class="btn btn-primary">Logout</a>
+                  <a href="logout.php" class="btn btn-primary">Logout</a>
                 </div>
               </div>
             </div>
           </div>
 
-        </di
+      </div>
         <!---Container Fluid-->
       </div>
       <!-- Footer -->

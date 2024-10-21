@@ -37,7 +37,7 @@ if($_SESSION['status'] != 'login'){
   <div id="wrapper">
     <!-- Sidebar -->
     <ul class="navbar-nav sidebar sidebar-light accordion" id="accordionSidebar">
-      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
         <div class="sidebar-brand-icon">
           <img src="img/logo/logo2.png">
         </div>
@@ -54,15 +54,14 @@ if($_SESSION['status'] != 'login'){
         Features
       </div>
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseBootstrap"
-          aria-expanded="true" aria-controls="collapseBootstrap">
-          <i class="far fa-fw fa-window-maximize"></i>
-          <span>Data Siswa</span>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#bayar" aria-expanded="true"
+          aria-controls="collapseForm">
+          <i class="fab fa-fw fa-wpforms"></i>
+          <span>Bayar Spp</span>
         </a>
-        <div id="collapseBootstrap" class="collapse" aria-labelledby="headingBootstrap" data-parent="#accordionSidebar">
+        <div id="bayar" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-            <a class="collapse-item" href="siswa.php">Lihat Data Siswa</a>
-            <a class="collapse-item" href="tambahsiswa.php">Tambah Siswa</a>
+          <a class="collapse-item" href="bayar.php">Bayar Spp</a>
           </div>
         </div>
       </li>
@@ -70,12 +69,11 @@ if($_SESSION['status'] != 'login'){
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseForm" aria-expanded="true"
           aria-controls="collapseForm">
           <i class="fab fa-fw fa-wpforms"></i>
-          <span>Data Spp</span>
+          <span>Status Pembayaran Spp</span>
         </a>
         <div id="collapseForm" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-          <a class="collapse-item" href="spp.php">Data Spp</a>
-          <a class="collapse-item" href="tambahspp.php">Tambah Spp</a>
+          <a class="collapse-item" href="spp.php">Lihat Status Pembayaran</a>
           </div>
         </div>
       </li>
@@ -83,24 +81,11 @@ if($_SESSION['status'] != 'login'){
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTable" aria-expanded="true"
           aria-controls="collapseTable">
           <i class="fas fa-fw fa-table"></i>
-          <span>Data Pembayaran</span>
+          <span>Riwayat Pembayaran Spp</span>
         </a>
         <div id="collapseTable" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-          <a class="collapse-item" href="pembayaran.php">Data Pembayaran</a>
-          </div>
-        </div>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#kelas" aria-expanded="true"
-          aria-controls="kelas">
-          <i class="fas fa-fw fa-table"></i>
-          <span>Data Kelas</span>
-        </a>
-        <div id="kelas" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
-          <div class="bg-white py-2 collapse-inner rounded">
-            <a class="collapse-item" href="kelas.php">Data Kelas</a>
-            <a class="collapse-item" href="tambahkelas.php">Tambah Kelas</a>
+          <a class="collapse-item" href="riwayat.php">Lihat Riwayat Pembayaran</a>
           </div>
         </div>
       </li>
@@ -118,7 +103,7 @@ if($_SESSION['status'] != 'login'){
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
                 <img class="img-profile rounded-circle" src="img/boy.png" style="max-width: 60px">
-                <span class="ml-2 d-none d-lg-inline text-white small">Maman Ketoprak</span>
+                <span class="ml-2 d-none d-lg-inline text-white small"><?= $_SESSION['nama_orangtua'] ?></span>
               </a>
               <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                 <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#logoutModal">
@@ -134,7 +119,7 @@ if($_SESSION['status'] != 'login'){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Siswa</h1>
+            <h1 class="h3 mb-0 text-gray-800">Data Riwayat</h1>
           </div>
 
           <!-- Row -->
@@ -142,52 +127,37 @@ if($_SESSION['status'] != 'login'){
             <!-- Datatables -->
             <div class="col-lg-12">
               <div class="card mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                  <a class="btn btn-success" href="tambahsiswa.php">Tambah Data</a>
-                </div>
                 <div class="table-responsive p-3">
                   <table class="table align-items-center table-flush" id="dataTable">
                     <thead class="thead-light">
                       <tr>
                         <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Orang Tua</th>
-                        <th>Aksi</th>
+                        <th>Bayar</th>
+                        <th>Bulan</th>
+                        <th>Tahun</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tfoot>
-                      <tr>
+                     <tr>
                         <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Orang Tua</th>
-                        <th>Aksi</th>
+                        <th>Bayar</th>
+                        <th>Bulan</th>
+                        <th>Tahun</th>
+                        <th>Status</th>
                       </tr>
                     </tfoot>
                     <tbody>
-                    <?php
-                            $no = 1;
-                            $tampil = mysqli_query($koneksi, "
-                                                        SELECT siswa_221043.*, orangtua_221043.nama_221043 AS nama_orang_tua
-                                                        FROM siswa_221043 
-                                                        JOIN orangtua_221043 ON siswa_221043.orangtua_id_221043 = orangtua_221043.id_221043
-                                                    ");
-                            while($data = mysqli_fetch_array($tampil)):
-                        ?>
+
                       <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['nama_221043'] ?></td>
-                        <td><?= $data['kelas_221043'] ?></td>
-                        <td><?= $data['nama_orang_tua'] ?></td>
-                        <td>
-                            <a class="btn btn-warning" href="">Edit</a>
-                            <a class="btn btn-danger" href="">Hapus</a>
-                        </td>
+                        <td>1</td>
+                        <td>Rp. 20.000</td>
+                        <td>Desember</td>
+                        <td>2023</td>
+                        <td><span class="badge badge-success">Sudah Bayar</span></td>
+
                       </tr>
-                      <?php
-                            endwhile; 
-                        ?>
+
                     </tbody>
                   </table>
                 </div>
