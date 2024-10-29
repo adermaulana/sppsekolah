@@ -4,6 +4,8 @@ include '../koneksi.php';
 
 session_start();
 
+$siswa_id = $_SESSION['id_siswa'];
+
 if($_SESSION['status'] != 'login'){
 
     session_unset();
@@ -26,7 +28,7 @@ if($_SESSION['status'] != 'login'){
   <meta name="description" content="">
   <meta name="author" content="">
   <link href="img/logo/logo.png" rel="icon">
-  <title>RuangAdmin - Dashboard</title>
+  <title>Siswa</title>
   <link href="../assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css">
   <link href="../assets/css/ruang-admin.min.css" rel="stylesheet">
@@ -90,7 +92,7 @@ if($_SESSION['status'] != 'login'){
             <li class="nav-item dropdown no-arrow">
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
-                <img class="img-profile rounded-circle" src="img/boy.png" style="max-width: 60px">
+                <img class="img-profile rounded-circle" src="../assets/img/boy.png" style="max-width: 60px">
                 <span class="ml-2 d-none d-lg-inline text-white small"><?= $_SESSION['nama_siswa'] ?></span>
               </a>
               <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
@@ -107,7 +109,7 @@ if($_SESSION['status'] != 'login'){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Riwayat</h1>
+            <h1 class="h3 mb-0 text-gray-800">Data Spp</h1>
           </div>
 
           <!-- Row -->
@@ -120,32 +122,62 @@ if($_SESSION['status'] != 'login'){
                     <thead class="thead-light">
                       <tr>
                         <th>No</th>
-                        <th>Bayar</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Biaya Spp</th>
                         <th>Bulan</th>
-                        <th>Tahun</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tfoot>
-                     <tr>
+                      <tr>
                         <th>No</th>
-                        <th>Bayar</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Biaya Spp</th>
                         <th>Bulan</th>
-                        <th>Tahun</th>
                         <th>Status</th>
                       </tr>
                     </tfoot>
                     <tbody>
-
+                    <?php
+                    $no = 1;
+                    $tampil = mysqli_query($koneksi, "SELECT 
+                                                          pembayaran_221043.*, 
+                                                          siswa_221043.nama_221043 AS nama_siswa, 
+                                                          spp_221043.biaya_221043 AS biaya_spp,
+                                                          kelas_221043.kelas_221043 AS kelas
+                                                      FROM 
+                                                          pembayaran_221043 
+                                                      JOIN 
+                                                          siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+                                                      JOIN 
+                                                          kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
+                                                      JOIN 
+                                                          spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+                                                      WHERE 
+                                                          pembayaran_221043.status_221043 = 'lunas' AND
+                                                          pembayaran_221043.siswa_id_221043 = '$siswa_id'
+                                                      ");
+                    while($data = mysqli_fetch_array($tampil)):
+                    ?>
                       <tr>
-                        <td>1</td>
-                        <td>Rp. 20.000</td>
-                        <td>Desember</td>
-                        <td>2023</td>
-                        <td><span class="badge badge-success">Sudah Bayar</span></td>
-
+                        <td><?= $no++ ?></td>
+                        <td><?= $data['nama_siswa'] ?></td>
+                        <td><?= $data['kelas'] ?></td>
+                        <td><?= $data['biaya_spp'] ?></td>
+                        <td><?= $data['bulan_221043'] ?></td>
+                        <td>
+                        <?php if ($data['status_221043'] == 'pending'): ?>
+                          <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
+                        <?php else: ?>
+                          <span class="badge badge-success"><?= $data['status_221043'] ?></span>
+                        <?php endif; ?>
+                      </td>
                       </tr>
-
+                      <?php
+                      endwhile; 
+                      ?>
                     </tbody>
                   </table>
                 </div>

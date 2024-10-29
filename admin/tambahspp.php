@@ -14,44 +14,35 @@ if($_SESSION['status'] != 'login'){
 }
 
 if (isset($_POST['simpan'])) {
-    // Insert into orangtua_221043 table first
-    $namaOrtu = $_POST['namaortu'];
-    $emailOrtu = $_POST['emailortu'];
-    $passwordOrtu = md5($_POST['passwordortu']); // Hash the password
+  // Check if the same id_kelas_221043 already exists
+  $id_kelas = $_POST['id_kelas_221043'];
+  $biaya = $_POST['biaya'];
+  $cek = mysqli_query($koneksi, "SELECT * FROM spp_221043 WHERE id_kelas_221043 = '$id_kelas'");
 
-    $insertOrtu = mysqli_query($koneksi, "INSERT INTO orangtua_221043 (nama_221043, email_221043, password_221043) VALUES ('$namaOrtu', '$emailOrtu', '$passwordOrtu')");
-
-    if ($insertOrtu) {
-        // Get the id of the inserted orangtua
-        $idOrtu = mysqli_insert_id($koneksi);
-
-        // Now insert into siswa_221043 table
-        $namaSiswa = $_POST['nama'];
-        $emailSiswa = $_POST['email'];
-        $kelas = $_POST['kelas'];
-        $alamat = $_POST['alamat'];
-        $passwordSiswa = md5($_POST['password']); // Hash the password for siswa
-
-        $insertSiswa = mysqli_query($koneksi, "INSERT INTO siswa_221043 (nama_221043, email_221043, kelas_221043, alamat_221043, password_221043, orangtua_id_221043) VALUES ('$namaSiswa', '$emailSiswa', '$kelas', '$alamat', '$passwordSiswa', '$idOrtu')");
-
-        if ($insertSiswa) {
-            echo "<script>
-                    alert('Simpan data siswa dan orang tua sukses!');
-                    document.location='siswa.php';
-                </script>";
-        } else {
-            echo "<script>
-                    alert('Simpan data siswa gagal!');
-                    document.location='tambahsiswa.php';
-                </script>";
-        }
-    } else {
-        echo "<script>
-                alert('Simpan data orang tua gagal!');
-                document.location='tambahsiswa.php';
+  if (mysqli_num_rows($cek) > 0) {
+      // If there’s already an entry with this id_kelas_221043, show an alert and exit
+      echo "<script>
+              alert('Data dengan Kelas tersebut sudah ada!');
+              document.location='tambahspp.php';
             </script>";
-    }
+  } else {
+      // If no duplicate, proceed to insert
+      $simpan = mysqli_query($koneksi, "INSERT INTO spp_221043 (id_kelas_221043, biaya_221043) VALUES ('$id_kelas', '$biaya')");
+
+      if ($simpan) {
+          echo "<script>
+                  alert('Simpan data sukses!');
+                  document.location='spp.php';
+                </script>";
+      } else {
+          echo "<script>
+                  alert('Simpan data Gagal!');
+                  document.location='spp.php';
+                </script>";
+      }
+  }
 }
+
 
 
 ?>
@@ -191,20 +182,24 @@ if (isset($_POST['simpan'])) {
                     <!-- Kelas Select -->
                     <div class="form-group">
                         <label for="kelas">Kelas</label>
-                        <select class="form-control" id="kelas" name="kelas" required>
-                        <option value="Kelas 1">Kelas 1</option>
-                        <option value="Kelas 2">Kelas 2</option>
-                        <option value="Kelas 3">Kelas 3</option>
-                        <option value="Kelas 4">Kelas 4</option>
-                        <option value="Kelas 5">Kelas 5</option>
-                        <option value="Kelas 6">Kelas 6</option>
+                        <select class="form-control" id="id_kelas_221043" name="id_kelas_221043" required>
+                        <option disabled selected>Pilih</option>
+                        <?php
+                            $no = 1;
+                            $tampil = mysqli_query($koneksi, "SELECT * FROM kelas_221043");
+                            while($data = mysqli_fetch_array($tampil)):
+                        ?>
+                        <option value="<?= $data['id_221043'] ?>"><?= $data['kelas_221043'] ?></option>
+                        <?php
+                        endwhile; 
+                        ?>
                         </select>
                     </div>
                     
                     <!-- Password Input -->
                     <div class="form-group">
                         <label for="password">Biaya Spp</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Biaya" required>
+                        <input type="number" class="form-control" id="biaya" name="biaya" placeholder="Biaya" required>
                     </div>
                     </div>
                   </div>

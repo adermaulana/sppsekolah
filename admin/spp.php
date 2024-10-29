@@ -13,6 +13,18 @@ if($_SESSION['status'] != 'login'){
 
 }
 
+if(isset($_GET['hal']) == "hapus"){
+
+  $hapus = mysqli_query($koneksi, "DELETE FROM spp_221043 WHERE id_221043 = '$_GET[id]'");
+
+  if($hapus){
+      echo "<script>
+      alert('Hapus data sukses!');
+      document.location='spp.php';
+      </script>";
+  }
+}
+
 ?>
 
 
@@ -164,7 +176,30 @@ if($_SESSION['status'] != 'login'){
                       </tr>
                     </tfoot>
                     <tbody>
-
+                    <?php
+                        $no = 1;
+                        $tampil = mysqli_query($koneksi, "SELECT 
+                                                              spp_221043.*,
+                                                              kelas_221043.kelas_221043
+                                                          FROM 
+                                                              spp_221043
+                                                          JOIN 
+                                                              kelas_221043 ON spp_221043.id_kelas_221043 = kelas_221043.id_221043
+                                                          ");
+                        while($data = mysqli_fetch_array($tampil)):
+                        ?>
+                        <tr>
+                          <td><?= $no++ ?></td>
+                          <td><?= $data['kelas_221043'] ?></td>
+                          <td><?= $data['biaya_221043'] ?></td>
+                          <td>
+                          <a class="btn btn-warning" href="editspp.php?hal=edit&id=<?= $data['id_221043']?>">Edit</a>
+                          <a class="btn btn-danger" href="spp.php?hal=hapus&id=<?= $data['id_221043']?>" onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data?')">Hapus</a>
+                          </td>
+                        </tr>
+                        <?php
+                      endwhile; 
+                      ?>
                     </tbody>
                   </table>
                 </div>

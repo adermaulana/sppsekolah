@@ -13,44 +13,20 @@ if($_SESSION['status'] != 'login'){
 
 }
 
-if (isset($_POST['simpan'])) {
-    // Insert into orangtua_221043 table first
-    $namaOrtu = $_POST['namaortu'];
-    $emailOrtu = $_POST['emailortu'];
-    $passwordOrtu = md5($_POST['passwordortu']); // Hash the password
+if(isset($_POST['simpan'])){
+  $simpan = mysqli_query($koneksi, "INSERT INTO kelas_221043 (kelas_221043) VALUES ('$_POST[kelas]')");
 
-    $insertOrtu = mysqli_query($koneksi, "INSERT INTO orangtua_221043 (nama_221043, email_221043, password_221043) VALUES ('$namaOrtu', '$emailOrtu', '$passwordOrtu')");
-
-    if ($insertOrtu) {
-        // Get the id of the inserted orangtua
-        $idOrtu = mysqli_insert_id($koneksi);
-
-        // Now insert into siswa_221043 table
-        $namaSiswa = $_POST['nama'];
-        $emailSiswa = $_POST['email'];
-        $kelas = $_POST['kelas'];
-        $alamat = $_POST['alamat'];
-        $passwordSiswa = md5($_POST['password']); // Hash the password for siswa
-
-        $insertSiswa = mysqli_query($koneksi, "INSERT INTO siswa_221043 (nama_221043, email_221043, kelas_221043, alamat_221043, password_221043, orangtua_id_221043) VALUES ('$namaSiswa', '$emailSiswa', '$kelas', '$alamat', '$passwordSiswa', '$idOrtu')");
-
-        if ($insertSiswa) {
-            echo "<script>
-                    alert('Simpan data siswa dan orang tua sukses!');
-                    document.location='siswa.php';
-                </script>";
-        } else {
-            echo "<script>
-                    alert('Simpan data siswa gagal!');
-                    document.location='tambahsiswa.php';
-                </script>";
-        }
-    } else {
-        echo "<script>
-                alert('Simpan data orang tua gagal!');
-                document.location='tambahsiswa.php';
-            </script>";
-    }
+  if($simpan){
+      echo "<script>
+              alert('Simpan data sukses!');
+              document.location='kelas.php';
+          </script>";
+  } else {
+      echo "<script>
+              alert('Simpan data Gagal!');
+              document.location='kelas.php';
+          </script>";
+  }
 }
 
 
@@ -190,8 +166,8 @@ if (isset($_POST['simpan'])) {
             <div class="col-lg-6">            
             <!-- Kelas Select -->
             <div class="form-group">
-                <label for="password">Nama Kelas</label>
-                <input type="password" class="form-control" id="password" name="password" placeholder="Kelas" required>
+                <label for="kelas">Nama Kelas</label>
+                <input type="text" class="form-control" id="kelas" name="kelas" placeholder="Kelas" required>
             </div>
             
 

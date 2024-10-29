@@ -13,17 +13,89 @@ if($_SESSION['status'] != 'login'){
 
 }
 
-if(isset($_GET['hal']) == "hapus"){
 
-  $hapus = mysqli_query($koneksi, "DELETE FROM kelas_221043 WHERE id_221043 = '$_GET[id]'");
-
-  if($hapus){
-      echo "<script>
-      alert('Hapus data sukses!');
-      document.location='kelas.php';
-      </script>";
-  }
+if(isset($_GET['hal'])){
+    if($_GET['hal'] == "edit"){
+        // SQL query to join siswa and orangtua tables
+        $tampil = mysqli_query($koneksi,"
+            SELECT siswa_221043.*, 
+                   orangtua_221043.id_221043 AS id_orangtua, 
+                   orangtua_221043.nama_221043 AS nama_orangtua, 
+                   orangtua_221043.username_221043 AS username_orangtua,
+                   orangtua_221043.email_221043 AS email_orangtua
+            FROM siswa_221043 
+            JOIN orangtua_221043 ON siswa_221043.orangtua_id_221043 = orangtua_221043.id_221043
+            WHERE siswa_221043.id_221043 = '$_GET[id]'
+        ");
+        
+        $data = mysqli_fetch_array($tampil);
+        if($data){
+            // Siswa data
+            $id = $data['id_221043'];
+            $nama_siswa = $data['nama_221043'];
+            $username_siswa = $data['username_221043'];
+            $alamat_siswa = $data['alamat_221043'];
+            $id_kelas = $data['id_kelas_221043'];
+            
+            // Orangtua data
+            $id_orangtua = $data['id_orangtua'];
+            $nama_orangtua = $data['nama_orangtua'];
+            $username_orangtua = $data['username_orangtua'];
+            $email_orangtua = $data['email_orangtua'];
+        }
+    }
 }
+
+if (isset($_POST['simpan'])) {
+    // Get the IDs for orang tua and siswa to update their records
+    $idOrtu = $id_orangtua;
+    $idSiswa = $id;
+    
+    // Update the orangtua_221043 table first
+    $namaOrtu = $_POST['namaortu'];
+    $usernameOrtu = $_POST['usernameortu'];
+    $emailOrtu = $_POST['emailortu'];
+
+    $updateOrtu = mysqli_query($koneksi, "UPDATE orangtua_221043 SET 
+                        nama_221043 = '$namaOrtu',
+                        username_221043 = '$usernameOrtu',
+                        email_221043 = '$emailOrtu'
+                    WHERE id_221043 = '$idOrtu'");
+
+    if ($updateOrtu) {
+        // Now update the siswa_221043 table
+        $namaSiswa = $_POST['nama'];
+        $usernameSiswa = $_POST['username'];
+        $kelas = $_POST['id_kelas_221043'];
+        $alamat = $_POST['alamat'];
+
+        $updateSiswa = mysqli_query($koneksi, "UPDATE siswa_221043 SET 
+                            nama_221043 = '$namaSiswa',
+                            username_221043 = '$usernameSiswa',
+                            id_kelas_221043 = '$kelas',
+                            alamat_221043 = '$alamat'
+                        WHERE id_221043 = '$idSiswa'");
+
+        if ($updateSiswa) {
+            echo "<script>
+                    alert('Update data siswa dan orang tua sukses!');
+                    document.location='siswa.php';
+                </script>";
+        } else {
+            echo "<script>
+                    alert('Update data siswa gagal!');
+                    document.location='editsiswa.php';
+                </script>";
+        }
+    } else {
+        echo "<script>
+                alert('Update data orang tua gagal!');
+                document.location='editsiswa.php';
+            </script>";
+    }
+}
+
+
 
 ?>
 
@@ -146,58 +218,102 @@ if(isset($_GET['hal']) == "hapus"){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Kelas</h1>
+            <h1 class="h3 mb-0 text-gray-800">Tambah Siswa</h1>
           </div>
 
-          <!-- Row -->
           <div class="row">
-            <!-- Datatables -->
-            <div class="col-lg-12">
-              <div class="card mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                  <a class="btn btn-success" href="tambahkelas.php">Tambah Data</a>
-                </div>
-                <div class="table-responsive p-3">
-                  <table class="table align-items-center table-flush" id="dataTable">
-                    <thead class="thead-light">
-                      <tr>
-                        <th>No</th>
-                        <th>Kelas</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tfoot>
-                      <tr>
-                        <th>No</th>
-                        <th>Kelas</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </tfoot>
-                    <tbody>
-                    <?php
-                    $no = 1;
-                    $tampil = mysqli_query($koneksi, "SELECT * FROM kelas_221043");
-                    while($data = mysqli_fetch_array($tampil)):
-                    ?>
-                      <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['kelas_221043'] ?></td>
-                        <td>
-                            <a class="btn btn-warning" href="editkelas.php?hal=edit&id=<?= $data['id_221043']?>">Edit</a>
-                            <a class="btn btn-danger"href="kelas.php?hal=hapus&id=<?= $data['id_221043']?>" onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data?')">Hapus</a>
-                        </td>
-                      </tr>
-                      <?php
-                      endwhile; 
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+  <div class="col-lg-12">
+    <!-- Form Basic -->
+    <div class="card mb-4">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Form Siswa dan Orang Tua</h6>
+      </div>
+      <div class="card-body">
+        <!-- Form start -->
+        <form method="POST">
+          <div class="row">
+            <!-- Siswa Section (Left Column) -->
+            <div class="col-lg-6">
+            <h6 class="font-weight-bold text-primary">Siswa</h6>
+            
+            <!-- Nama Input -->
+            <div class="form-group">
+                <label for="nama">Nama</label>
+                <input type="text" class="form-control" name="nama" value="<?= $nama_siswa ?>" id="nama" placeholder="Enter Nama" required>
             </div>
 
+            <div class="form-group">
+                <label for="nama">Username</label>
+                <input type="text" class="form-control" name="username" value="<?= $username_siswa ?>" id="username" placeholder="Enter Username" required>
+            </div>
+
+            <!-- Kelas Select -->
+            <div class="form-group">
+                        <label for="kelas">Kelas</label>
+                        <select class="form-control" id="id_kelas_221043" name="id_kelas_221043" required>
+                            <option disabled selected>Pilih</option>
+                            <?php
+                                $no = 1;
+                                $tampil = mysqli_query($koneksi, "SELECT * FROM kelas_221043");
+                                while($data = mysqli_fetch_array($tampil)):
+                                    $selected = ($data['id_221043'] == $id_kelas) ? 'selected' : '';
+                            ?>
+                                <option value="<?= $data['id_221043'] ?>" <?= $selected ?>><?= $data['kelas_221043'] ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+            
+            <!-- Alamat Textarea -->
+            <div class="form-group">
+                <label for="alamat">Alamat</label>
+                <textarea class="form-control" id="alamat" name="alamat" rows="3" placeholder="Enter Alamat" required><?= $alamat_siswa ?></textarea>
+            </div>
+
+            <!-- Password Input -->
+            </div>
+
+
+            <!-- Orang Tua Section (Right Column) -->
+            <div class="col-lg-6">
+              <h6 class="font-weight-bold text-primary">Orang Tua</h6>
+            <!-- Nama Input -->
+            <div class="form-group">
+                <label for="namaortu">Nama</label>
+                <input type="text" class="form-control" name="namaortu" value="<?= $nama_orangtua ?>" id="namaortu" placeholder="Enter Nama" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nama">Username</label>
+                <input type="text" class="form-control" name="usernameortu" value="<?= $username_orangtua ?>" id="usernameortu" placeholder="Enter Username" required>
+            </div>
+            
+            <!-- Email Input -->
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="emailortu" name="emailortu" value="<?= $email_orangtua ?>" placeholder="Enter email" required>
+            </div>
+            </div>
           </div>
-          <!--Row-->
+          <!-- Single Submit Button -->
+          <button type="submit" name="simpan" class="btn btn-primary">Submit</button>
+        </form>
+        <!-- Form end -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+          <!-- Documentation Link -->
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <p>For more documentations you can visit<a href="https://getbootstrap.com/docs/4.3/components/forms/"
+                  target="_blank">
+                  bootstrap forms documentations.</a> and <a
+                  href="https://getbootstrap.com/docs/4.3/components/input-group/" target="_blank">bootstrap input
+                  groups documentations</a></p>
+            </div>
+          </div>
 
           <!-- Modal Logout -->
           <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabelLogout"
@@ -221,7 +337,7 @@ if(isset($_GET['hal']) == "hapus"){
             </div>
           </div>
 
-        </div>
+      </div>
         <!---Container Fluid-->
       </div>
       <!-- Footer -->

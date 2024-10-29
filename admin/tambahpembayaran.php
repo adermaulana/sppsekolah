@@ -13,17 +13,23 @@ if($_SESSION['status'] != 'login'){
 
 }
 
-if(isset($_GET['hal']) == "hapus"){
-
-  $hapus = mysqli_query($koneksi, "DELETE FROM kelas_221043 WHERE id_221043 = '$_GET[id]'");
-
-  if($hapus){
-      echo "<script>
-      alert('Hapus data sukses!');
-      document.location='kelas.php';
-      </script>";
+if(isset($_POST['simpan'])){
+    $simpan = mysqli_query($koneksi, "INSERT INTO pembayaran_221043 (siswa_id_221043, spp_id_221043,bulan_221043,status_221043) VALUES ('$_POST[siswa_id_221043]','$_POST[spp_id_221043]','$_POST[bulan]','$_POST[status]')");
+  
+    if($simpan){
+        echo "<script>
+                alert('Simpan data sukses!');
+                document.location='pembayaran.php';
+            </script>";
+    } else {
+        echo "<script>
+                alert('Simpan data Gagal!');
+                document.location='pembayaran.php';
+            </script>";
+    }
   }
-}
+
+
 
 ?>
 
@@ -146,58 +152,110 @@ if(isset($_GET['hal']) == "hapus"){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Kelas</h1>
+            <h1 class="h3 mb-0 text-gray-800">Tambah Pembayaran</h1>
           </div>
 
-          <!-- Row -->
           <div class="row">
-            <!-- Datatables -->
-            <div class="col-lg-12">
-              <div class="card mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                  <a class="btn btn-success" href="tambahkelas.php">Tambah Data</a>
-                </div>
-                <div class="table-responsive p-3">
-                  <table class="table align-items-center table-flush" id="dataTable">
-                    <thead class="thead-light">
-                      <tr>
-                        <th>No</th>
-                        <th>Kelas</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tfoot>
-                      <tr>
-                        <th>No</th>
-                        <th>Kelas</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </tfoot>
-                    <tbody>
-                    <?php
-                    $no = 1;
-                    $tampil = mysqli_query($koneksi, "SELECT * FROM kelas_221043");
-                    while($data = mysqli_fetch_array($tampil)):
-                    ?>
-                      <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['kelas_221043'] ?></td>
-                        <td>
-                            <a class="btn btn-warning" href="editkelas.php?hal=edit&id=<?= $data['id_221043']?>">Edit</a>
-                            <a class="btn btn-danger"href="kelas.php?hal=hapus&id=<?= $data['id_221043']?>" onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data?')">Hapus</a>
-                        </td>
-                      </tr>
-                      <?php
-                      endwhile; 
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
+          <div class="col-lg-12">
+            <!-- Form Basic -->
+            <div class="card mb-4">
+              <div class="card-body">
+                <!-- Form start -->
+                <form method="POST">
+                  <div class="row">
+                    <!-- Siswa Section (Left Column) -->
+                    <div class="col-lg-6">            
+                    <!-- Kelas Select -->
+
+                    <div class="form-group">
+                        <label for="siswa">Siswa</label>
+                        <select class="form-control" id="siswa_id_221043" name="siswa_id_221043" required>
+                        <option disabled selected>Pilih</option>
+                        <?php
+                            $no = 1;
+                            $tampil = mysqli_query($koneksi, "SELECT 
+                                                                    siswa_221043.*, 
+                                                                    kelas_221043.kelas_221043 AS nama_kelas,
+                                                                    spp_221043.biaya_221043 AS biaya_spp,
+                                                                    spp_221043.id_221043 AS id_spp
+                                                                FROM 
+                                                                    siswa_221043
+                                                                JOIN 
+                                                                    kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043
+                                                                JOIN 
+                                                                    spp_221043 ON kelas_221043.id_221043 = spp_221043.id_kelas_221043;
+                                                                ");
+                            while($data = mysqli_fetch_array($tampil)):
+                        ?>
+                        <option value="<?= $data['id_221043'] ?>" data-kelas="<?= $data['nama_kelas'] ?>" data-spp="<?= $data['id_spp'] ?>" data-biaya="<?= $data['biaya_spp'] ?>"><?= $data['nama_221043'] ?></option>
+                        <?php
+                        endwhile; 
+                        ?>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="biaya">Kelas</label>
+                        <input type="text" class="form-control" id="kelas" name="kelas" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="biaya">Biaya Spp</label>
+                        <input type="hidden" id="biaya" name="biaya">
+                        <input type="text" class="form-control" id="biayaDisplay" name="biayaDisplay" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bulan">Bulan</label>
+                        <select class="form-control" id="bulan" name="bulan" required>
+                            <option selected disabled>Pilih Bulan</option>
+                            <option value="Januari">Januari</option>
+                            <option value="Februari">Februari</option>
+                            <option value="Maret">Maret</option>
+                            <option value="April">April</option>
+                            <option value="Mei">Mei</option>
+                            <option value="Juni">Juni</option>
+                            <option value="Juli">Juli</option>
+                            <option value="Agustus">Agustus</option>
+                            <option value="September">September</option>
+                            <option value="Oktober">Oktober</option>
+                            <option value="November">November</option>
+                            <option value="Desember">Desember</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="kelas">Status</label>
+                        <select class="form-control" id="status" name="status" required>
+                        <option selected disabled>Pilih</option>
+                        <option value="pending">Pending</option>
+                        <option value="lunas">Lunas</option>
+                        </select>
+                    </div>
+                        <input type="hidden" id="spp_id_221043" name="spp_id_221043">
+                    </div>
+                  </div>
+                  <!-- Single Submit Button -->
+                  <button type="submit" name="simpan" class="btn btn-primary">Submit</button>
+                </form>
+                <!-- Form end -->
               </div>
             </div>
-
           </div>
-          <!--Row-->
+        </div>
+
+
+          <!-- Documentation Link -->
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <p>For more documentations you can visit<a href="https://getbootstrap.com/docs/4.3/components/forms/"
+                  target="_blank">
+                  bootstrap forms documentations.</a> and <a
+                  href="https://getbootstrap.com/docs/4.3/components/input-group/" target="_blank">bootstrap input
+                  groups documentations</a></p>
+            </div>
+          </div>
 
           <!-- Modal Logout -->
           <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabelLogout"
@@ -221,7 +279,7 @@ if(isset($_GET['hal']) == "hapus"){
             </div>
           </div>
 
-        </div>
+      </div>
         <!---Container Fluid-->
       </div>
       <!-- Footer -->
@@ -266,6 +324,44 @@ if(isset($_GET['hal']) == "hapus"){
       $('#dataTableHover').DataTable(); // ID From dataTable with Hover
     });
   </script>
+
+  
+
+    <script type="text/javascript">
+
+function formatRupiah(angka) {
+   var number_string = angka.toString().replace(/[^,\d]/g, ''),
+      split = number_string.split(','),
+      sisa = split[0].length % 3,
+      rupiah = split[0].substr(0, sisa),
+      ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+   // Tambahkan titik jika angka lebih dari ribuan
+   if (ribuan) {
+      separator = sisa ? '.' : '';
+      rupiah += separator + ribuan.join('.');
+   }
+
+   return rupiah; // hasilnya tanpa simbol Rp
+}
+
+    $('#siswa_id_221043').on('change', function(){
+    // ambil data dari elemen option yang dipilih
+    const kelas = $('#siswa_id_221043 option:selected').data('kelas');
+    const biaya = $('#siswa_id_221043 option:selected').data('biaya');
+    const spp = $('#siswa_id_221043 option:selected').data('spp');
+
+    // kalkulasi total harga
+    const hargaFormatted = formatRupiah(biaya);
+    // tampilkan data ke element
+    $('[name=kelas]').val(`${kelas}`);
+    $('[name=biayaDisplay]').val(`Rp. ${hargaFormatted}`);
+    $('[name=spp_id_221043]').val(`${spp}`);
+
+    });
+
+    </script>
+
 
 </body>
 

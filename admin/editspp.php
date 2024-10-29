@@ -4,9 +4,6 @@ include '../koneksi.php';
 
 session_start();
 
-$orangtua_id = $_SESSION['id_orangtua'];
-
-
 if($_SESSION['status'] != 'login'){
 
     session_unset();
@@ -15,6 +12,46 @@ if($_SESSION['status'] != 'login'){
     header("location:../");
 
 }
+
+if(isset($_GET['hal'])){
+    if($_GET['hal'] == "edit"){
+        $tampil = mysqli_query($koneksi, "SELECT 
+                                                spp_221043.*, 
+                                                kelas_221043.kelas_221043 AS nama_kelas
+                                            FROM 
+                                                spp_221043
+                                            JOIN 
+                                                kelas_221043 ON spp_221043.id_kelas_221043 = kelas_221043.id_221043
+                                            WHERE 
+                                                spp_221043.id_221043 = '$_GET[id]'");
+        $data = mysqli_fetch_array($tampil);
+        if($data){
+            $id = $data['id_221043'];
+            $kelas = $data['id_kelas_221043'];
+            $biaya = $data['biaya_221043'];
+        }
+    }
+}
+
+//Perintah Mengubah Data
+if(isset($_POST['simpan'])){
+
+    $simpan = mysqli_query($koneksi, "UPDATE spp_221043 SET
+                                        id_kelas_221043 = '$_POST[id_kelas_221043]',biaya_221043 = '$_POST[biaya]' WHERE id_221043 = '$_GET[id]'");
+    
+if($simpan){
+    echo "<script>
+            alert('Edit data sukses!');
+            document.location='spp.php';
+        </script>";
+} else {
+    echo "<script>
+            alert('Edit data Gagal!');
+            document.location='spp.php';
+        </script>";
+}
+}
+
 
 ?>
 
@@ -40,7 +77,7 @@ if($_SESSION['status'] != 'login'){
   <div id="wrapper">
     <!-- Sidebar -->
     <ul class="navbar-nav sidebar sidebar-light accordion" id="accordionSidebar">
-      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
         <div class="sidebar-brand-icon">
           <img src="img/logo/logo2.png">
         </div>
@@ -57,14 +94,15 @@ if($_SESSION['status'] != 'login'){
         Features
       </div>
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#bayar" aria-expanded="true"
-          aria-controls="collapseForm">
-          <i class="fab fa-fw fa-wpforms"></i>
-          <span>Bayar Spp</span>
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseBootstrap"
+          aria-expanded="true" aria-controls="collapseBootstrap">
+          <i class="far fa-fw fa-window-maximize"></i>
+          <span>Data Siswa</span>
         </a>
-        <div id="bayar" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
+        <div id="collapseBootstrap" class="collapse" aria-labelledby="headingBootstrap" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-          <a class="collapse-item" href="bayar.php">Bayar Spp</a>
+            <a class="collapse-item" href="siswa.php">Lihat Data Siswa</a>
+            <a class="collapse-item" href="tambahsiswa.php">Tambah Siswa</a>
           </div>
         </div>
       </li>
@@ -72,11 +110,12 @@ if($_SESSION['status'] != 'login'){
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseForm" aria-expanded="true"
           aria-controls="collapseForm">
           <i class="fab fa-fw fa-wpforms"></i>
-          <span>Status Pembayaran Spp</span>
+          <span>Data Spp</span>
         </a>
         <div id="collapseForm" class="collapse" aria-labelledby="headingForm" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-          <a class="collapse-item" href="spp.php">Lihat Status Pembayaran</a>
+          <a class="collapse-item" href="spp.php">Data Spp</a>
+          <a class="collapse-item" href="tambahspp.php">Tambah Spp</a>
           </div>
         </div>
       </li>
@@ -84,11 +123,24 @@ if($_SESSION['status'] != 'login'){
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTable" aria-expanded="true"
           aria-controls="collapseTable">
           <i class="fas fa-fw fa-table"></i>
-          <span>Riwayat Pembayaran Spp</span>
+          <span>Data Pembayaran</span>
         </a>
         <div id="collapseTable" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
           <div class="bg-white py-2 collapse-inner rounded">
-          <a class="collapse-item" href="riwayat.php">Lihat Riwayat Pembayaran</a>
+          <a class="collapse-item" href="pembayaran.php">Data Pembayaran</a>
+          </div>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#kelas" aria-expanded="true"
+          aria-controls="kelas">
+          <i class="fas fa-fw fa-table"></i>
+          <span>Data Kelas</span>
+        </a>
+        <div id="kelas" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            <a class="collapse-item" href="kelas.php">Data Kelas</a>
+            <a class="collapse-item" href="tambahkelas.php">Tambah Kelas</a>
           </div>
         </div>
       </li>
@@ -106,7 +158,7 @@ if($_SESSION['status'] != 'login'){
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
                 <img class="img-profile rounded-circle" src="img/boy.png" style="max-width: 60px">
-                <span class="ml-2 d-none d-lg-inline text-white small"><?= $_SESSION['nama_orangtua'] ?></span>
+                <span class="ml-2 d-none d-lg-inline text-white small">Maman Ketoprak</span>
               </a>
               <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                 <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#logoutModal">
@@ -122,83 +174,63 @@ if($_SESSION['status'] != 'login'){
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Riwayat</h1>
+            <h1 class="h3 mb-0 text-gray-800">Tambah Spp</h1>
           </div>
 
-          <!-- Row -->
           <div class="row">
-            <!-- Datatables -->
-            <div class="col-lg-12">
-              <div class="card mb-4">
-                <div class="table-responsive p-3">
-                  <table class="table align-items-center table-flush" id="dataTable">
-                    <thead class="thead-light">
-                      <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Biaya Spp</th>
-                        <th>Bulan</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tfoot>
-                      <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Biaya Spp</th>
-                        <th>Bulan</th>
-                        <th>Status</th>
-                      </tr>
-                    </tfoot>
-                    <tbody>
-                    <?php
-                    $no = 1;
-                    $tampil = mysqli_query($koneksi, "SELECT 
-                                                          pembayaran_221043.*, 
-                                                          siswa_221043.nama_221043 AS nama_siswa, 
-                                                          spp_221043.biaya_221043 AS biaya_spp,
-                                                          kelas_221043.kelas_221043 AS kelas
-                                                      FROM 
-                                                          pembayaran_221043 
-                                                      JOIN 
-                                                          siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
-                                                      JOIN 
-                                                          kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
-                                                      JOIN 
-                                                          spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
-                                                      WHERE 
-                                                          pembayaran_221043.status_221043 = 'lunas' AND
-                                                          siswa_221043.orangtua_id_221043 = '$orangtua_id'
-                                                      ");
-                    while($data = mysqli_fetch_array($tampil)):
-                    ?>
-                      <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['nama_siswa'] ?></td>
-                        <td><?= $data['kelas'] ?></td>
-                        <td><?= $data['biaya_spp'] ?></td>
-                        <td><?= $data['bulan_221043'] ?></td>
-                        <td>
-                        <?php if ($data['status_221043'] == 'pending'): ?>
-                          <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
-                        <?php else: ?>
-                          <span class="badge badge-success"><?= $data['status_221043'] ?></span>
-                        <?php endif; ?>
-                      </td>
-                      </tr>
-                      <?php
-                      endwhile; 
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
+          <div class="col-lg-12">
+            <!-- Form Basic -->
+            <div class="card mb-4">
+              <div class="card-body">
+                <!-- Form start -->
+                <form method="POST">
+                  <div class="row">
+                    <!-- Siswa Section (Left Column) -->
+                    <div class="col-lg-6">            
+                    <!-- Kelas Select -->
+                    <div class="form-group">
+                        <label for="kelas">Kelas</label>
+                        <select class="form-control" id="id_kelas_221043" name="id_kelas_221043" required>
+                            <option disabled selected>Pilih</option>
+                            <?php
+                                $no = 1;
+                                $tampil = mysqli_query($koneksi, "SELECT * FROM kelas_221043");
+                                while($data = mysqli_fetch_array($tampil)):
+                                    $selected = ($data['id_221043'] == $kelas) ? 'selected' : '';
+                            ?>
+                                <option value="<?= $data['id_221043'] ?>" <?= $selected ?>><?= $data['kelas_221043'] ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+
+                    
+                    <!-- Password Input -->
+                    <div class="form-group">
+                        <label for="password">Biaya Spp</label>
+                        <input type="number" class="form-control" id="biaya" value="<?= $biaya ?>" name="biaya" placeholder="Biaya" required>
+                    </div>
+                    </div>
+                  </div>
+                  <!-- Single Submit Button -->
+                  <button type="submit" name="simpan" class="btn btn-primary">Submit</button>
+                </form>
+                <!-- Form end -->
               </div>
             </div>
-
           </div>
-          <!--Row-->
+        </div>
+
+
+          <!-- Documentation Link -->
+          <div class="row">
+            <div class="col-lg-12 text-center">
+              <p>For more documentations you can visit<a href="https://getbootstrap.com/docs/4.3/components/forms/"
+                  target="_blank">
+                  bootstrap forms documentations.</a> and <a
+                  href="https://getbootstrap.com/docs/4.3/components/input-group/" target="_blank">bootstrap input
+                  groups documentations</a></p>
+            </div>
+          </div>
 
           <!-- Modal Logout -->
           <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabelLogout"
@@ -222,7 +254,7 @@ if($_SESSION['status'] != 'login'){
             </div>
           </div>
 
-        </div>
+      </div>
         <!---Container Fluid-->
       </div>
       <!-- Footer -->

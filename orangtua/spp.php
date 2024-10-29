@@ -4,6 +4,8 @@ include '../koneksi.php';
 
 session_start();
 
+$orangtua_id = $_SESSION['id_orangtua'];
+
 if($_SESSION['status'] != 'login'){
 
     session_unset();
@@ -132,32 +134,66 @@ if($_SESSION['status'] != 'login'){
                     <thead class="thead-light">
                       <tr>
                         <th>No</th>
-                        <th>Bayar</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Biaya Spp</th>
                         <th>Bulan</th>
-                        <th>Tahun</th>
                         <th>Status</th>
+                        <th>Aksi</th>
                       </tr>
                     </thead>
                     <tfoot>
-                     <tr>
+                      <tr>
                         <th>No</th>
-                        <th>Bayar</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Biaya Spp</th>
                         <th>Bulan</th>
-                        <th>Tahun</th>
                         <th>Status</th>
+                        <th>Aksi</th>
                       </tr>
                     </tfoot>
                     <tbody>
-
+                    <?php
+                    $no = 1;
+                    $tampil = mysqli_query($koneksi, "SELECT 
+                                                          pembayaran_221043.*, 
+                                                          siswa_221043.nama_221043 AS nama_siswa, 
+                                                          spp_221043.biaya_221043 AS biaya_spp,
+                                                          kelas_221043.kelas_221043 AS kelas
+                                                      FROM 
+                                                          pembayaran_221043 
+                                                      JOIN 
+                                                          siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+                                                      JOIN 
+                                                          kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
+                                                      JOIN 
+                                                          spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+                                                      WHERE 
+                                                          siswa_221043.orangtua_id_221043 = '$orangtua_id'
+                                                      ");
+                    while($data = mysqli_fetch_array($tampil)):
+                    ?>
                       <tr>
-                        <td>1</td>
-                        <td>Rp. 20.000</td>
-                        <td>Januari</td>
-                        <td>2024</td>
-                        <td><span class="badge badge-danger">Belum Bayar</span></td>
-
+                        <td><?= $no++ ?></td>
+                        <td><?= $data['nama_siswa'] ?></td>
+                        <td><?= $data['kelas'] ?></td>
+                        <td><?= $data['biaya_spp'] ?></td>
+                        <td><?= $data['bulan_221043'] ?></td>
+                        <td>
+                        <?php if ($data['status_221043'] == 'pending'): ?>
+                          <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
+                        <?php else: ?>
+                          <span class="badge badge-success"><?= $data['status_221043'] ?></span>
+                        <?php endif; ?>
+                      </td>
+                        <td>
+                            <a class="btn btn-success" href="">Lihat Bukti Pembayaran</a>
+                        </td>
                       </tr>
-
+                      <?php
+                      endwhile; 
+                      ?>
                     </tbody>
                   </table>
                 </div>

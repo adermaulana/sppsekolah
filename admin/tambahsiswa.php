@@ -16,10 +16,11 @@ if($_SESSION['status'] != 'login'){
 if (isset($_POST['simpan'])) {
     // Insert into orangtua_221043 table first
     $namaOrtu = $_POST['namaortu'];
+    $usernameOrtu = $_POST['usernameortu'];
     $emailOrtu = $_POST['emailortu'];
     $passwordOrtu = md5($_POST['passwordortu']); // Hash the password
 
-    $insertOrtu = mysqli_query($koneksi, "INSERT INTO orangtua_221043 (nama_221043, email_221043, password_221043) VALUES ('$namaOrtu', '$emailOrtu', '$passwordOrtu')");
+    $insertOrtu = mysqli_query($koneksi, "INSERT INTO orangtua_221043 (nama_221043,username_221043, email_221043, password_221043) VALUES ('$namaOrtu','$usernameOrtu', '$emailOrtu', '$passwordOrtu')");
 
     if ($insertOrtu) {
         // Get the id of the inserted orangtua
@@ -27,12 +28,12 @@ if (isset($_POST['simpan'])) {
 
         // Now insert into siswa_221043 table
         $namaSiswa = $_POST['nama'];
-        $emailSiswa = $_POST['email'];
-        $kelas = $_POST['kelas'];
+        $usernameSiswa = $_POST['username'];
+        $kelas = $_POST['id_kelas_221043'];
         $alamat = $_POST['alamat'];
         $passwordSiswa = md5($_POST['password']); // Hash the password for siswa
 
-        $insertSiswa = mysqli_query($koneksi, "INSERT INTO siswa_221043 (nama_221043, email_221043, kelas_221043, alamat_221043, password_221043, orangtua_id_221043) VALUES ('$namaSiswa', '$emailSiswa', '$kelas', '$alamat', '$passwordSiswa', '$idOrtu')");
+        $insertSiswa = mysqli_query($koneksi, "INSERT INTO siswa_221043 (nama_221043,username_221043, id_kelas_221043, alamat_221043, password_221043, orangtua_id_221043) VALUES ('$namaSiswa','$usernameSiswa', '$kelas', '$alamat', '$passwordSiswa', '$idOrtu')");
 
         if ($insertSiswa) {
             echo "<script>
@@ -199,18 +200,27 @@ if (isset($_POST['simpan'])) {
                 <input type="text" class="form-control" name="nama" id="nama" placeholder="Enter Nama" required>
             </div>
 
+            <div class="form-group">
+                <label for="nama">Username</label>
+                <input type="text" class="form-control" name="username" id="username" placeholder="Enter Username" required>
+            </div>
+
             <!-- Kelas Select -->
             <div class="form-group">
-                <label for="kelas">Kelas</label>
-                <select class="form-control" id="kelas" name="kelas" required>
-                <option value="Kelas 1">Kelas 1</option>
-                <option value="Kelas 2">Kelas 2</option>
-                <option value="Kelas 3">Kelas 3</option>
-                <option value="Kelas 4">Kelas 4</option>
-                <option value="Kelas 5">Kelas 5</option>
-                <option value="Kelas 6">Kelas 6</option>
-                </select>
-            </div>
+                        <label for="kelas">Kelas</label>
+                        <select class="form-control" id="id_kelas_221043" name="id_kelas_221043" required>
+                        <option disabled selected>Pilih</option>
+                        <?php
+                            $no = 1;
+                            $tampil = mysqli_query($koneksi, "SELECT * FROM kelas_221043");
+                            while($data = mysqli_fetch_array($tampil)):
+                        ?>
+                        <option value="<?= $data['id_221043'] ?>"><?= $data['kelas_221043'] ?></option>
+                        <?php
+                        endwhile; 
+                        ?>
+                        </select>
+                    </div>
             
             <!-- Alamat Textarea -->
             <div class="form-group">
@@ -233,6 +243,11 @@ if (isset($_POST['simpan'])) {
             <div class="form-group">
                 <label for="namaortu">Nama</label>
                 <input type="text" class="form-control" name="namaortu" id="namaortu" placeholder="Enter Nama" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nama">Username</label>
+                <input type="text" class="form-control" name="usernameortu" id="usernameortu" placeholder="Enter Username" required>
             </div>
             
             <!-- Email Input -->
