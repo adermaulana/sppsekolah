@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 29, 2024 at 10:11 AM
+-- Generation Time: Nov 05, 2024 at 12:50 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -106,7 +106,8 @@ CREATE TABLE `pembayaran_221043` (
 --
 
 INSERT INTO `pembayaran_221043` (`id_221043`, `siswa_id_221043`, `spp_id_221043`, `tanggal_bayar_221043`, `bukti_pembayaran_221043`, `bulan_221043`, `status_221043`) VALUES
-(2, 8, 3, NULL, 'uploads/Screenshot (2).png', 'Januari', 'pending');
+(2, 8, 3, '2024-11-05', 'uploads/qrcode_1730802701.png', 'Januari', 'lunas'),
+(3, 8, 3, '2024-11-05', NULL, 'Februari', 'lunas');
 
 -- --------------------------------------------------------
 
@@ -227,7 +228,7 @@ ALTER TABLE `orangtua_221043`
 -- AUTO_INCREMENT for table `pembayaran_221043`
 --
 ALTER TABLE `pembayaran_221043`
-  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `siswa_221043`

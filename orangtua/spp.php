@@ -139,7 +139,6 @@ if($_SESSION['status'] != 'login'){
                         <th>Biaya Spp</th>
                         <th>Bulan</th>
                         <th>Status</th>
-                        <th>Aksi</th>
                       </tr>
                     </thead>
                     <tfoot>
@@ -150,7 +149,6 @@ if($_SESSION['status'] != 'login'){
                         <th>Biaya Spp</th>
                         <th>Bulan</th>
                         <th>Status</th>
-                        <th>Aksi</th>
                       </tr>
                     </tfoot>
                     <tbody>
@@ -187,9 +185,6 @@ if($_SESSION['status'] != 'login'){
                           <span class="badge badge-success"><?= $data['status_221043'] ?></span>
                         <?php endif; ?>
                       </td>
-                        <td>
-                            <a class="btn btn-success" href="">Lihat Bukti Pembayaran</a>
-                        </td>
                       </tr>
                       <?php
                       endwhile; 

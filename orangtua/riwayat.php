@@ -127,77 +127,123 @@ if($_SESSION['status'] != 'login'){
 
           <!-- Row -->
           <div class="row">
-            <!-- Datatables -->
-            <div class="col-lg-12">
-              <div class="card mb-4">
-                <div class="table-responsive p-3">
-                  <table class="table align-items-center table-flush" id="dataTable">
-                    <thead class="thead-light">
-                      <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Biaya Spp</th>
-                        <th>Bulan</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tfoot>
-                      <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Biaya Spp</th>
-                        <th>Bulan</th>
-                        <th>Status</th>
-                      </tr>
-                    </tfoot>
-                    <tbody>
-                    <?php
-                    $no = 1;
-                    $tampil = mysqli_query($koneksi, "SELECT 
-                                                          pembayaran_221043.*, 
-                                                          siswa_221043.nama_221043 AS nama_siswa, 
-                                                          spp_221043.biaya_221043 AS biaya_spp,
-                                                          kelas_221043.kelas_221043 AS kelas
-                                                      FROM 
-                                                          pembayaran_221043 
-                                                      JOIN 
-                                                          siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
-                                                      JOIN 
-                                                          kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
-                                                      JOIN 
-                                                          spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
-                                                      WHERE 
-                                                          pembayaran_221043.status_221043 = 'lunas' AND
-                                                          siswa_221043.orangtua_id_221043 = '$orangtua_id'
-                                                      ");
-                    while($data = mysqli_fetch_array($tampil)):
-                    ?>
-                      <tr>
-                        <td><?= $no++ ?></td>
-                        <td><?= $data['nama_siswa'] ?></td>
-                        <td><?= $data['kelas'] ?></td>
-                        <td><?= $data['biaya_spp'] ?></td>
-                        <td><?= $data['bulan_221043'] ?></td>
-                        <td>
-                        <?php if ($data['status_221043'] == 'pending'): ?>
-                          <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
-                        <?php else: ?>
-                          <span class="badge badge-success"><?= $data['status_221043'] ?></span>
-                        <?php endif; ?>
-                      </td>
-                      </tr>
-                      <?php
-                      endwhile; 
-                      ?>
-                    </tbody>
-                  </table>
-                </div>
+  <!-- Filter Card -->
+  <div class="col-lg-12">
+    <div class="card mb-4">
+      <div class="card-body">
+        <form method="GET" class="row">
+          <div class="col-lg-3">
+            <div class="form-group">
+              <label>Tanggal Awal</label>
+              <input type="date" class="form-control" name="start_date" value="<?= isset($_GET['start_date']) ? $_GET['start_date'] : '' ?>">
+            </div>
+          </div>
+          <div class="col-lg-3">
+            <div class="form-group">
+              <label>Tanggal Akhir</label>
+              <input type="date" class="form-control" name="end_date" value="<?= isset($_GET['end_date']) ? $_GET['end_date'] : '' ?>">
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="form-group">
+              <label>&nbsp;</label>
+              <div>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="?" class="btn btn-danger">
+                  <i class="fas fa-undo"></i> Reset
+                </a>
+                <button type="button" id="exportExcel" class="btn btn-success">
+                  <i class="fas fa-file-excel"></i> Export Excel
+                </button>
               </div>
             </div>
-
           </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Datatables -->
+  <div class="col-lg-12">
+    <div class="card mb-4">
+      <div class="table-responsive p-3">
+        <table class="table align-items-center table-flush" id="dataTable">
+          <thead class="thead-light">
+            <tr>
+              <th>No</th>
+              <th>Nama</th>
+              <th>Kelas</th>
+              <th>Biaya Spp</th>
+              <th>Bulan</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tfoot>
+            <tr>
+              <th>No</th>
+              <th>Nama</th>
+              <th>Kelas</th>
+              <th>Biaya Spp</th>
+              <th>Bulan</th>
+              <th>Status</th>
+            </tr>
+          </tfoot>
+          <tbody>
+          <?php
+          $no = 1;
+          $where_clause = "WHERE pembayaran_221043.status_221043 = 'lunas' 
+                          AND siswa_221043.orangtua_id_221043 = '$orangtua_id'";
+
+          if(isset($_GET['start_date']) && isset($_GET['end_date'])) {
+              $start_date = mysqli_real_escape_string($koneksi, $_GET['start_date']);
+              $end_date = mysqli_real_escape_string($koneksi, $_GET['end_date']);
+              if(!empty($start_date) && !empty($end_date)) {
+                  $where_clause .= " AND DATE(pembayaran_221043.tanggal_bayar_221043) 
+                                   BETWEEN '$start_date' AND '$end_date'";
+              }
+          }
+
+          $tampil = mysqli_query($koneksi, "SELECT 
+                                              pembayaran_221043.*, 
+                                              siswa_221043.nama_221043 AS nama_siswa, 
+                                              spp_221043.biaya_221043 AS biaya_spp,
+                                              kelas_221043.kelas_221043 AS kelas
+                                          FROM 
+                                              pembayaran_221043 
+                                          JOIN 
+                                              siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+                                          JOIN 
+                                              kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
+                                          JOIN 
+                                              spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+                                          $where_clause
+                                          ORDER BY pembayaran_221043.tanggal_bayar_221043 DESC");
+          
+          while($data = mysqli_fetch_array($tampil)):
+          ?>
+            <tr>
+              <td><?= $no++ ?></td>
+              <td><?= htmlspecialchars($data['nama_siswa']) ?></td>
+              <td><?= htmlspecialchars($data['kelas']) ?></td>
+              <td>Rp <?= number_format($data['biaya_spp'], 0, ',', '.') ?></td>
+              <td><?= htmlspecialchars($data['bulan_221043']) ?></td>
+              <td>
+                <?php if ($data['status_221043'] == 'pending'): ?>
+                  <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
+                <?php else: ?>
+                  <span class="badge badge-success"><?= $data['status_221043'] ?></span>
+                <?php endif; ?>
+              </td>
+            </tr>
+          <?php endwhile; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
           <!--Row-->
 
           <!-- Modal Logout -->
@@ -260,6 +306,62 @@ if($_SESSION['status'] != 'login'){
   <script src="../assets/vendor/datatables/jquery.dataTables.min.js"></script>
   <script src="../assets/vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize DataTable
+    $('#dataTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
+        }
+    });
+
+    // Date validation
+    $('input[name="end_date"]').change(function() {
+        let startDate = $('input[name="start_date"]').val();
+        let endDate = $(this).val();
+        
+        if(startDate && endDate && startDate > endDate) {
+            alert('Tanggal akhir harus lebih besar dari tanggal awal');
+            $(this).val('');
+        }
+    });
+
+    $('input[name="start_date"]').change(function() {
+        let startDate = $(this).val();
+        let endDate = $('input[name="end_date"]').val();
+        
+        if(startDate && endDate && startDate > endDate) {
+            alert('Tanggal awal harus lebih kecil dari tanggal akhir');
+            $(this).val('');
+        }
+    });
+
+    // Excel Export
+    $('#exportExcel').click(function() {
+        let table = document.getElementById('dataTable');
+        
+        // Create a workbook
+        let wb = XLSX.utils.book_new();
+        
+        // Convert table to worksheet
+        let ws = XLSX.utils.table_to_sheet(table);
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Laporan Pembayaran SPP');
+        
+        // Generate date string for filename
+        let date = new Date();
+        let dateStr = date.getFullYear() + '-' + 
+                     String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                     String(date.getDate()).padStart(2, '0');
+        
+        // Save the file
+        XLSX.writeFile(wb, `Laporan_Pembayaran_SPP_${dateStr}.xlsx`);
+    });
+});
+</script>
+
   <!-- Page level custom scripts -->
   <script>
     $(document).ready(function () {
@@ -267,6 +369,7 @@ if($_SESSION['status'] != 'login'){
       $('#dataTableHover').DataTable(); // ID From dataTable with Hover
     });
   </script>
+
 
 </body>
 

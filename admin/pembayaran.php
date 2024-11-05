@@ -201,9 +201,18 @@ if($_SESSION['status'] != 'login'){
                           <span class="badge badge-success"><?= $data['status_221043'] ?></span>
                         <?php endif; ?>
                       </td>
+
                         <td>
-                            <a class="btn btn-success" href="">Lihat Bukti Pembayaran</a>
+                            <a class="btn btn-success viewBukti" href="#" 
+                              data-toggle="modal" 
+                              data-target="#buktiModal"
+                              data-id="<?= $data['id_221043'] ?>"
+                              data-bukti="<?= $data['bukti_pembayaran_221043'] ?>"
+                              data-status="<?= $data['status_221043'] ?>">
+                                Lihat Bukti Pembayaran
+                            </a>
                         </td>
+
                       </tr>
                       <?php
                       endwhile; 
@@ -216,6 +225,33 @@ if($_SESSION['status'] != 'login'){
 
           </div>
           <!--Row-->
+
+          <div class="modal fade" id="buktiModal" tabindex="-1" role="dialog" aria-labelledby="buktiModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="buktiModalLabel">Bukti Pembayaran</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <img id="buktiImage" src="" alt="Bukti Pembayaran" class="img-fluid">
+                    <div id="statusSection" class="mt-3">
+                      <h6>Status Pembayaran</h6>
+                      <form action="update_status.php" method="POST">
+                        <input type="hidden" id="pembayaranId" name="pembayaran_id">
+                        <select class="form-control" id="statusPembayaran" name="status">
+                          <option value="pending">Pending</option>
+                          <option value="lunas">Lunas</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-3">Update Status</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
           <!-- Modal Logout -->
           <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabelLogout"
@@ -284,6 +320,23 @@ if($_SESSION['status'] != 'login'){
       $('#dataTableHover').DataTable(); // ID From dataTable with Hover
     });
   </script>
+
+<script>
+$(document).ready(function() {
+    // Handle modal open
+    $('.viewBukti').on('click', function() {
+        const id = $(this).data('id');
+        const bukti = $(this).data('bukti');
+        const status = $(this).data('status');
+        
+        $('#pembayaranId').val(id);
+        $('#buktiImage').attr('src', '../orangtua/' + bukti);
+        $('#statusPembayaran').val(status);
+    });
+    
+   
+});
+</script>
 
 </body>
 
