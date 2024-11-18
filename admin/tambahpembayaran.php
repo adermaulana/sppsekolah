@@ -209,18 +209,20 @@ if(isset($_POST['simpan'])){
                         <label for="bulan">Bulan</label>
                         <select class="form-control" id="bulan" name="bulan" required>
                             <option selected disabled>Pilih Bulan</option>
-                            <option value="Januari">Januari</option>
-                            <option value="Februari">Februari</option>
-                            <option value="Maret">Maret</option>
-                            <option value="April">April</option>
-                            <option value="Mei">Mei</option>
-                            <option value="Juni">Juni</option>
-                            <option value="Juli">Juli</option>
-                            <option value="Agustus">Agustus</option>
-                            <option value="September">September</option>
-                            <option value="Oktober">Oktober</option>
-                            <option value="November">November</option>
-                            <option value="Desember">Desember</option>
+                            <?php
+                            // Dapatkan bulan dan tahun saat ini
+                            $current_month = date('m');
+                            $current_year = date('Y');
+                            
+                            // Generate 12 bulan ke depan dari bulan saat ini
+                            for ($i = 0; $i < 12; $i++) {
+                                $month = date('m', strtotime("+$i months"));
+                                $year = date('Y', strtotime("+$i months"));
+                                $month_year = "$month-$year";
+                                $month_name = date('F Y', strtotime("$year-$month-01")); // Nama bulan dan tahun untuk tampilan
+                                echo "<option value='$month_year'>$month_name</option>";
+                            }
+                            ?>
                         </select>
                     </div>
 
@@ -360,6 +362,40 @@ function formatRupiah(angka) {
 
     });
 
+    </script>
+
+
+    <script>
+    // Format tampilan bulan ke bahasa Indonesia
+    const monthNames = {
+        'January': 'Januari',
+        'February': 'Februari',
+        'March': 'Maret',
+        'April': 'April',
+        'May': 'Mei',
+        'June': 'Juni',
+        'July': 'Juli',
+        'August': 'Agustus',
+        'September': 'September',
+        'October': 'Oktober',
+        'November': 'November',
+        'December': 'Desember'
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const select = document.getElementById('bulan');
+        const options = select.options;
+        
+        for (let i = 1; i < options.length; i++) {
+            const option = options[i];
+            const text = option.text;
+            const parts = text.split(' ');
+            if (parts.length === 2) {
+                const monthName = monthNames[parts[0]] || parts[0];
+                option.text = `${monthName} ${parts[1]}`;
+            }
+        }
+    });
     </script>
 
 

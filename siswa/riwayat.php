@@ -141,9 +141,9 @@ if($_SESSION['status'] != 'login'){
                 <a href="?" class="btn btn-danger">
                   <i class="fas fa-undo"></i> Reset
                 </a>
-                <button type="button" id="exportExcel" class="btn btn-success">
+                <!-- <button type="button" id="exportExcel" class="btn btn-success">
                   <i class="fas fa-file-excel"></i> Export Excel
-                </button>
+                </button> -->
               </div>
             </div>
           </div>
@@ -159,21 +159,29 @@ if($_SESSION['status'] != 'login'){
         <table class="table align-items-center table-flush" id="dataTable">
           <thead class="thead-light">
             <tr>
-              <th>No</th>
+            <th>No</th>
               <th>Nama</th>
               <th>Kelas</th>
-              <th>Biaya Spp</th>
+              <th>Biaya SPP</th>
               <th>Bulan</th>
+              <th>Jatuh Tempo</th>
+              <th>Denda</th>
+              <th>Total Bayar</th>
+              <th>Bukti Pembayaran</th>
               <th>Status</th>
             </tr>
           </thead>
           <tfoot>
             <tr>
-              <th>No</th>
+            <th>No</th>
               <th>Nama</th>
               <th>Kelas</th>
-              <th>Biaya Spp</th>
+              <th>Biaya SPP</th>
               <th>Bulan</th>
+              <th>Jatuh Tempo</th>
+              <th>Denda</th>
+              <th>Total Bayar</th>
+              <th>Bukti Pembayaran</th>
               <th>Status</th>
             </tr>
           </tfoot>
@@ -192,37 +200,106 @@ if($_SESSION['status'] != 'login'){
               }
           }
 
+          function hitungDenda($tanggal_jatuh_tempo, $biaya_spp) {
+            $denda_per_bulan = 0.05; // 5% dari biaya SPP per bulan
+            $sekarang = new DateTime();
+            $jatuh_tempo = new DateTime($tanggal_jatuh_tempo);
+            
+            // Jika belum melewati tanggal jatuh tempo, tidak ada denda
+            if ($sekarang <= $jatuh_tempo) {
+                return 0;
+            }
+            
+            // Hitung selisih bulan
+            $interval = $jatuh_tempo->diff($sekarang);
+            $selisih_bulan = ($interval->y * 12) + $interval->m;
+            
+            // Hitung total denda
+            $total_denda = $biaya_spp * $denda_per_bulan * $selisih_bulan;
+            
+            return $total_denda;
+          }
+          
+          
           $tampil = mysqli_query($koneksi, "SELECT 
-                                              pembayaran_221043.*, 
-                                              siswa_221043.nama_221043 AS nama_siswa, 
-                                              spp_221043.biaya_221043 AS biaya_spp,
-                                              kelas_221043.kelas_221043 AS kelas
-                                          FROM 
-                                              pembayaran_221043 
-                                          JOIN 
-                                              siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
-                                          JOIN 
-                                              kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
-                                          JOIN 
-                                              spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+              pembayaran_221043.*, 
+              siswa_221043.nama_221043 AS nama_siswa, 
+              spp_221043.biaya_221043 AS biaya_spp,
+              kelas_221043.kelas_221043 AS kelas,
+              DATE_FORMAT(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%Y-%m-%d') as tanggal_jatuh_tempo
+          FROM 
+              pembayaran_221043 
+          JOIN 
+              siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+          JOIN 
+              kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
+          JOIN 
+              spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
                                           $where_clause
                                           ORDER BY pembayaran_221043.tanggal_bayar_221043 DESC");
           
           while($data = mysqli_fetch_array($tampil)):
+
+            $denda = hitungDenda($data['tanggal_jatuh_tempo'], $data['biaya_spp']);
+            $total_bayar = $data['biaya_spp'] + $denda;
+
+            $date = $data['bulan_221043']; // Nilai dari database, contoh: '11-2024'
+
+            if ($date) {
+                // Pisahkan bulan dan tahun
+                list($month, $year) = explode('-', $date);
+        
+                // Array nama bulan dalam Bahasa Indonesia
+                $bulan_indo = [
+                    '01' => 'Januari',
+                    '02' => 'Februari',
+                    '03' => 'Maret',
+                    '04' => 'April',
+                    '05' => 'Mei',
+                    '06' => 'Juni',
+                    '07' => 'Juli',
+                    '08' => 'Agustus',
+                    '09' => 'September',
+                    '10' => 'Oktober',
+                    '11' => 'November',
+                    '12' => 'Desember'
+                ];
+        
+                // Tampilkan nama bulan dan tahun
+                echo $bulan_indo[$month] . ' ' . $year;
+            } else {
+                echo 'Tanggal tidak valid';
+            }
           ?>
-            <tr>
-              <td><?= $no++ ?></td>
-              <td><?= htmlspecialchars($data['nama_siswa']) ?></td>
-              <td><?= htmlspecialchars($data['kelas']) ?></td>
-              <td>Rp <?= number_format($data['biaya_spp'], 0, ',', '.') ?></td>
-              <td><?= htmlspecialchars($data['bulan_221043']) ?></td>
-              <td>
-                <?php if ($data['status_221043'] == 'pending'): ?>
-                  <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
-                <?php else: ?>
-                  <span class="badge badge-success"><?= $data['status_221043'] ?></span>
-                <?php endif; ?>
-              </td>
+ <tr>
+                            <td><?= $no++ ?></td>
+                            <td><?= $data['nama_siswa'] ?></td>
+                            <td><?= $data['kelas'] ?></td>
+                            <td>Rp <?= number_format($data['biaya_spp'], 0, ',', '.') ?></td>
+                            <td><?= $data['bulan_221043'] ?></td>
+                            <td><?= $bulan_indo[$month] . ' ' . $year?></td>
+                            <td><?php 
+                                if ($denda > 0) {
+                                  echo '<span class="text-danger">Rp ' . number_format($denda, 0, ',', '.') . ' (5%)</span>';
+                                } else {
+                                    echo '-';
+                                }
+                            ?></td>
+                            <td>Rp <?= number_format($total_bayar, 0, ',', '.') ?></td>
+                            <td>
+                                <?php if (!empty($data['bukti_pembayaran_221043'])): ?>
+                                    <img src="../orangtua/<?= $data['bukti_pembayaran_221043'] ?>" alt="Bukti Pembayaran" style="max-width: 100px; max-height: 100px;">
+                                <?php else: ?>
+                                    <span>Tidak ada bukti pembayaran</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($data['status_221043'] == 'pending'): ?>
+                                    <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
+                                <?php else: ?>
+                                    <span class="badge badge-success"><?= $data['status_221043'] ?></span>
+                                <?php endif; ?>
+                            </td>
             </tr>
           <?php endwhile; ?>
           </tbody>

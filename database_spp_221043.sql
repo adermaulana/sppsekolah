@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 05, 2024 at 12:50 PM
+-- Generation Time: Nov 18, 2024 at 08:38 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -83,7 +83,8 @@ CREATE TABLE `orangtua_221043` (
 
 INSERT INTO `orangtua_221043` (`id_221043`, `nama_221043`, `username_221043`, `email_221043`, `password_221043`) VALUES
 (16, 'orangtua', 'orangtua', 'orangtua@gmail.com', '344c999a63cd55b3035cbf76c2691f88'),
-(17, 'gann', 'gan', 'gan@gmail.com', 'f1253bc7b6c0b1d62eb9b97cfebf0f63');
+(17, 'gann', 'gan', 'gan@gmail.com', 'f1253bc7b6c0b1d62eb9b97cfebf0f63'),
+(18, 'guri', 'guri', 'guri@gmail.com', '30060066b23320722f802fb533203830');
 
 -- --------------------------------------------------------
 
@@ -106,8 +107,7 @@ CREATE TABLE `pembayaran_221043` (
 --
 
 INSERT INTO `pembayaran_221043` (`id_221043`, `siswa_id_221043`, `spp_id_221043`, `tanggal_bayar_221043`, `bukti_pembayaran_221043`, `bulan_221043`, `status_221043`) VALUES
-(2, 8, 3, '2024-11-05', 'uploads/qrcode_1730802701.png', 'Januari', 'lunas'),
-(3, 8, 3, '2024-11-05', NULL, 'Februari', 'lunas');
+(7, 8, 3, '2024-11-18', 'uploads/images (1).jpeg', '09-2024', 'lunas');
 
 -- --------------------------------------------------------
 
@@ -131,7 +131,8 @@ CREATE TABLE `siswa_221043` (
 
 INSERT INTO `siswa_221043` (`id_221043`, `nama_221043`, `username_221043`, `id_kelas_221043`, `alamat_221043`, `orangtua_id_221043`, `password_221043`) VALUES
 (8, 'siswa', 'siswa', 3, 'siswa', 16, 'bcd724d15cde8c47650fda962968f102'),
-(9, 'gun', 'gun', 3, 'gun', 17, '5161ebb0cce4b7987ba8b6935d60a180');
+(9, 'gun', 'gun', 3, 'gun', 17, '5161ebb0cce4b7987ba8b6935d60a180'),
+(10, 'udin', 'wahyu', 5, 'jalann', 18, '32c9e71e866ecdbc93e497482aa6779f');
 
 -- --------------------------------------------------------
 
@@ -150,7 +151,7 @@ CREATE TABLE `spp_221043` (
 --
 
 INSERT INTO `spp_221043` (`id_221043`, `id_kelas_221043`, `biaya_221043`) VALUES
-(3, 3, 2333),
+(3, 3, 50000),
 (4, 5, 40000),
 (5, 4, 30000);
 
@@ -222,19 +223,19 @@ ALTER TABLE `kelas_221043`
 -- AUTO_INCREMENT for table `orangtua_221043`
 --
 ALTER TABLE `orangtua_221043`
-  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `pembayaran_221043`
 --
 ALTER TABLE `pembayaran_221043`
-  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `siswa_221043`
 --
 ALTER TABLE `siswa_221043`
-  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_221043` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `spp_221043`
