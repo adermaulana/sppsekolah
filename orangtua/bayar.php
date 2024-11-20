@@ -1,5 +1,4 @@
 <?php
-
 include '../koneksi.php';
 
 session_start();
@@ -7,12 +6,9 @@ session_start();
 $orangtua_id = $_SESSION['id_orangtua'];
 
 if($_SESSION['status'] != 'login'){
-
     session_unset();
     session_destroy();
-
     header("location:../");
-
 }
 
 function hitungDenda($tanggal_jatuh_tempo, $biaya_spp) {
@@ -20,22 +16,45 @@ function hitungDenda($tanggal_jatuh_tempo, $biaya_spp) {
   $sekarang = new DateTime();
   $jatuh_tempo = new DateTime($tanggal_jatuh_tempo);
   
-  // Jika belum melewati tanggal jatuh tempo, tidak ada denda
   if ($sekarang <= $jatuh_tempo) {
       return 0;
   }
   
-  // Hitung selisih bulan
   $interval = $jatuh_tempo->diff($sekarang);
   $selisih_bulan = ($interval->y * 12) + $interval->m;
   
-  // Hitung total denda
   $total_denda = $biaya_spp * $denda_per_bulan * $selisih_bulan;
   
   return $total_denda;
 }
 
+// Query untuk mendapatkan range bulan dan total denda
+$query_range = "SELECT 
+    MIN(bulan_221043) as min_bulan,
+    MAX(bulan_221043) as max_bulan,
+    SUM(CASE 
+        WHEN status_221043 = 'pending' THEN 
+            spp_221043.biaya_221043 * 0.05 * 
+            PERIOD_DIFF(
+                DATE_FORMAT(NOW(), '%Y%m'),
+                CONCAT(SUBSTRING_INDEX(bulan_221043, '-', -1), SUBSTRING_INDEX(bulan_221043, '-', 1))
+            )
+        ELSE 0 
+    END) as total_denda,
+    COUNT(CASE WHEN status_221043 = 'pending' THEN 1 END) as jumlah_tunggakan
+FROM 
+    pembayaran_221043 
+JOIN 
+    siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+JOIN 
+    spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+WHERE 
+    siswa_221043.orangtua_id_221043 = '$orangtua_id'";
 
+$result_range = mysqli_query($koneksi, $query_range);
+$denda_info = mysqli_fetch_assoc($result_range);
+
+// Query untuk data pembayaran
 $tampil = mysqli_query($koneksi, "SELECT 
     pembayaran_221043.*, 
     siswa_221043.nama_221043 AS nama_siswa, 
@@ -53,9 +72,27 @@ JOIN
 WHERE 
     siswa_221043.orangtua_id_221043 = '$orangtua_id'");
 
+// Fungsi untuk format bulan
+function formatBulan($bulan) {
+    list($month, $year) = explode('-', $bulan);
+    $bulan_indo = [
+        '01' => 'Januari',
+        '02' => 'Februari',
+        '03' => 'Maret',
+        '04' => 'April',
+        '05' => 'Mei',
+        '06' => 'Juni',
+        '07' => 'Juli',
+        '08' => 'Agustus',
+        '09' => 'September',
+        '10' => 'Oktober',
+        '11' => 'November',
+        '12' => 'Desember'
+    ];
+    return $bulan_indo[$month] . ' ' . $year;
+}
 
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -154,6 +191,53 @@ WHERE
 
           <!-- Row -->
           <div class="row">
+            <!-- Card Ringkasan Denda -->
+            <div class="col-lg-12">
+                <div class="card mb-4">
+                    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">Ringkasan Total Denda</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Periode Pembayaran:</label>
+                                    <p><?= formatBulan($denda_info['min_bulan']) ?> - <?= formatBulan($denda_info['max_bulan']) ?></p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Jumlah Tunggakan:</label>
+                                    <p><?= $denda_info['jumlah_tunggakan'] ?> bulan</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Total Denda:</label>
+                                    <p class="text-danger">Rp <?= number_format($denda_info['total_denda'], 0, ',', '.') ?></p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Status:</label>
+                                    <?php if ($denda_info['total_denda'] > 0): ?>
+                                        <p class="text-danger">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                            Terdapat Tunggakan
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="text-success">
+                                            <i class="fas fa-check-circle"></i>
+                                            Tidak Ada Tunggakan
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Datatables -->
             <div class="col-lg-12">
               <div class="card mb-4">
@@ -181,45 +265,19 @@ WHERE
                             $denda = hitungDenda($data['tanggal_jatuh_tempo'], $data['biaya_spp']);
                             $total_bayar = $data['biaya_spp'] + $denda;
 
-                            $date = $data['bulan_221043']; // Nilai dari database, contoh: '11-2024'
-
-                            if ($date) {
-                                // Pisahkan bulan dan tahun
-                                list($month, $year) = explode('-', $date);
-                        
-                                // Array nama bulan dalam Bahasa Indonesia
-                                $bulan_indo = [
-                                    '01' => 'Januari',
-                                    '02' => 'Februari',
-                                    '03' => 'Maret',
-                                    '04' => 'April',
-                                    '05' => 'Mei',
-                                    '06' => 'Juni',
-                                    '07' => 'Juli',
-                                    '08' => 'Agustus',
-                                    '09' => 'September',
-                                    '10' => 'Oktober',
-                                    '11' => 'November',
-                                    '12' => 'Desember'
-                                ];
-                        
-                                // Tampilkan nama bulan dan tahun
-                                echo $bulan_indo[$month] . ' ' . $year;
-                            } else {
-                                echo 'Tanggal tidak valid';
-                            }
-
+                            $date = $data['bulan_221043'];
+                            list($month, $year) = explode('-', $date);
                         ?>
                         <tr>
                             <td><?= $no++ ?></td>
                             <td><?= $data['nama_siswa'] ?></td>
                             <td><?= $data['kelas'] ?></td>
                             <td>Rp <?= number_format($data['biaya_spp'], 0, ',', '.') ?></td>
-                            <td><?= $data['bulan_221043'] ?></td>
-                            <td><?= $bulan_indo[$month] . ' ' . $year?></td>
+                            <td><?= formatBulan($data['bulan_221043']) ?></td>
+                            <td><?= formatBulan($data['bulan_221043']) ?></td>
                             <td><?php 
                                 if ($denda > 0) {
-                                  echo '<span class="text-danger">Rp ' . number_format($denda, 0, ',', '.') . ' (5%)</span>';
+                                    echo '<span class="text-danger">Rp ' . number_format($denda, 0, ',', '.') . ' (5%)</span>';
                                 } else {
                                     echo '-';
                                 }
