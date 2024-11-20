@@ -1,24 +1,35 @@
 <?php
-
 include '../koneksi.php';
 
 session_start();
 
 if($_SESSION['status'] != 'login'){
-
     session_unset();
     session_destroy();
-
     header("location:../");
-
 }
 
 if(isset($_POST['simpan'])){
-    $simpan = mysqli_query($koneksi, "INSERT INTO pembayaran_221043 (siswa_id_221043, spp_id_221043,bulan_221043,status_221043) VALUES ('$_POST[siswa_id_221043]','$_POST[spp_id_221043]','$_POST[bulan]','$_POST[status]')");
-  
+    $siswa_id = $_POST['siswa_id_221043'];
+    $spp_id = $_POST['spp_id_221043'];
+    $status = $_POST['status'];
+    $current_year = date('Y');
+    
+    // Loop through all 12 months
+    for($month = 1; $month <= 12; $month++) {
+        // Format bulan dengan leading zero (01, 02, etc)
+        $formatted_month = str_pad($month, 2, '0', STR_PAD_LEFT);
+        // Format bulan-tahun (01-2024, 02-2024, etc)
+        $bulan = $formatted_month . "-" . $current_year;
+        
+        $simpan = mysqli_query($koneksi, "INSERT INTO pembayaran_221043 
+            (siswa_id_221043, spp_id_221043, bulan_221043, status_221043) 
+            VALUES ('$siswa_id', '$spp_id', '$bulan', '$status')");
+    }
+    
     if($simpan){
         echo "<script>
-                alert('Simpan data sukses!');
+                alert('Simpan data sukses untuk semua bulan!');
                 document.location='pembayaran.php';
             </script>";
     } else {
@@ -27,10 +38,7 @@ if(isset($_POST['simpan'])){
                 document.location='pembayaran.php';
             </script>";
     }
-  }
-
-
-
+}
 ?>
 
 
@@ -159,90 +167,63 @@ if(isset($_POST['simpan'])){
           <div class="col-lg-12">
             <!-- Form Basic -->
             <div class="card mb-4">
-              <div class="card-body">
-                <!-- Form start -->
-                <form method="POST">
-                  <div class="row">
-                    <!-- Siswa Section (Left Column) -->
-                    <div class="col-lg-6">            
-                    <!-- Kelas Select -->
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-lg-6">            
+                                <div class="form-group">
+                                    <label for="siswa">Siswa</label>
+                                    <select class="form-control" id="siswa_id_221043" name="siswa_id_221043" required>
+                                        <option disabled selected>Pilih</option>
+                                        <?php
+                                        $tampil = mysqli_query($koneksi, "SELECT 
+                                            siswa_221043.*, 
+                                            kelas_221043.kelas_221043 AS nama_kelas,
+                                            spp_221043.biaya_221043 AS biaya_spp,
+                                            spp_221043.id_221043 AS id_spp
+                                        FROM 
+                                            siswa_221043
+                                        JOIN 
+                                            kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043
+                                        JOIN 
+                                            spp_221043 ON kelas_221043.id_221043 = spp_221043.id_kelas_221043");
+                                        while($data = mysqli_fetch_array($tampil)):
+                                        ?>
+                                        <option value="<?= $data['id_221043'] ?>" 
+                                                data-kelas="<?= $data['nama_kelas'] ?>" 
+                                                data-spp="<?= $data['id_spp'] ?>" 
+                                                data-biaya="<?= $data['biaya_spp'] ?>">
+                                            <?= $data['nama_221043'] ?>
+                                        </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="biaya">Kelas</label>
+                                    <input type="text" class="form-control" id="kelas" name="kelas" readonly>
+                                </div>
 
-                    <div class="form-group">
-                        <label for="siswa">Siswa</label>
-                        <select class="form-control" id="siswa_id_221043" name="siswa_id_221043" required>
-                        <option disabled selected>Pilih</option>
-                        <?php
-                            $no = 1;
-                            $tampil = mysqli_query($koneksi, "SELECT 
-                                                                    siswa_221043.*, 
-                                                                    kelas_221043.kelas_221043 AS nama_kelas,
-                                                                    spp_221043.biaya_221043 AS biaya_spp,
-                                                                    spp_221043.id_221043 AS id_spp
-                                                                FROM 
-                                                                    siswa_221043
-                                                                JOIN 
-                                                                    kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043
-                                                                JOIN 
-                                                                    spp_221043 ON kelas_221043.id_221043 = spp_221043.id_kelas_221043;
-                                                                ");
-                            while($data = mysqli_fetch_array($tampil)):
-                        ?>
-                        <option value="<?= $data['id_221043'] ?>" data-kelas="<?= $data['nama_kelas'] ?>" data-spp="<?= $data['id_spp'] ?>" data-biaya="<?= $data['biaya_spp'] ?>"><?= $data['nama_221043'] ?></option>
-                        <?php
-                        endwhile; 
-                        ?>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="biaya">Kelas</label>
-                        <input type="text" class="form-control" id="kelas" name="kelas" readonly>
-                    </div>
+                                <div class="form-group">
+                                    <label for="biaya">Biaya SPP</label>
+                                    <input type="hidden" id="biaya" name="biaya">
+                                    <input type="text" class="form-control" id="biayaDisplay" name="biayaDisplay" readonly>
+                                </div>
 
-                    <div class="form-group">
-                        <label for="biaya">Biaya Spp</label>
-                        <input type="hidden" id="biaya" name="biaya">
-                        <input type="text" class="form-control" id="biayaDisplay" name="biayaDisplay" readonly>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="bulan">Bulan</label>
-                        <select class="form-control" id="bulan" name="bulan" required>
-                            <option selected disabled>Pilih Bulan</option>
-                            <?php
-                            // Dapatkan bulan dan tahun saat ini
-                            $current_month = date('m');
-                            $current_year = date('Y');
-                            
-                            // Generate 12 bulan ke depan dari bulan saat ini
-                            for ($i = 0; $i < 12; $i++) {
-                                $month = date('m', strtotime("+$i months"));
-                                $year = date('Y', strtotime("+$i months"));
-                                $month_year = "$month-$year";
-                                $month_name = date('F Y', strtotime("$year-$month-01")); // Nama bulan dan tahun untuk tampilan
-                                echo "<option value='$month_year'>$month_name</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-
-                    <div class="form-group">
-                        <label for="kelas">Status</label>
-                        <select class="form-control" id="status" name="status" required>
-                        <option selected disabled>Pilih</option>
-                        <option value="pending">Pending</option>
-                        <option value="lunas">Lunas</option>
-                        </select>
-                    </div>
-                        <input type="hidden" id="spp_id_221043" name="spp_id_221043">
-                    </div>
-                  </div>
-                  <!-- Single Submit Button -->
-                  <button type="submit" name="simpan" class="btn btn-primary">Submit</button>
-                </form>
-                <!-- Form end -->
-              </div>
+                                <div class="form-group">
+                                    <label for="kelas">Status</label>
+                                    <select class="form-control" id="status" name="status" required>
+                                        <option selected disabled>Pilih</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="lunas">Lunas</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" id="spp_id_221043" name="spp_id_221043">
+                            </div>
+                        </div>
+                        <button type="submit" name="simpan" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
             </div>
           </div>
         </div>
