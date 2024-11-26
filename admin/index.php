@@ -105,6 +105,18 @@ if($_SESSION['status'] != 'login'){
           </div>
         </div>
       </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#laporan" aria-expanded="true"
+          aria-controls="kelas">
+          <i class="fas fa-fw fa-table"></i>
+          <span>Laporan</span>
+        </a>
+        <div id="laporan" class="collapse" aria-labelledby="headingTable" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            <a class="collapse-item" href="laporan.php">Lihat Laporan</a>
+          </div>
+        </div>
+      </li>
     </ul>
     <!-- Sidebar -->
     <div id="content-wrapper" class="d-flex flex-column">
