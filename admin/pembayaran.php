@@ -33,21 +33,53 @@ function hitungDenda($tanggal_jatuh_tempo, $biaya_spp) {
   return $total_denda;
 }
 
+$tahun = date('Y');
 
 $tampil = mysqli_query($koneksi, "SELECT 
-    pembayaran_221043.*, 
-    siswa_221043.nama_221043 AS nama_siswa, 
-    spp_221043.biaya_221043 AS biaya_spp,
-    kelas_221043.kelas_221043 AS kelas,
-    DATE_FORMAT(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%Y-%m-%d') as tanggal_jatuh_tempo
-FROM 
-    pembayaran_221043 
-JOIN 
-    siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
-JOIN 
-    kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
-JOIN 
-    spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+        siswa_221043.id_221043 AS id_siswa,
+        pembayaran_221043.id_221043 AS id,
+        pembayaran_221043.bukti_pembayaran_221043 AS bukti_pembayaran,
+        siswa_221043.nama_221043 AS nama_siswa, 
+        kelas_221043.kelas_221043 AS kelas,
+        GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y') ORDER BY pembayaran_221043.bulan_221043 ASC) AS bulan_pembayaran,
+        SUM(spp_221043.biaya_221043) AS total_biaya_spp,
+        SUM(
+            CASE 
+                WHEN DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < NOW()
+                THEN spp_221043.biaya_221043 * 0.05 * TIMESTAMPDIFF(MONTH, DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')), NOW())
+                ELSE 0
+            END
+        ) AS total_denda,
+        GROUP_CONCAT(
+            DISTINCT CASE 
+                WHEN DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < DATE_FORMAT(NOW(), '%Y-%m-01')
+                THEN DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y')
+                ELSE NULL
+            END
+            ORDER BY pembayaran_221043.bulan_221043 ASC
+        ) AS bulan_denda,
+        SUM(spp_221043.biaya_221043) + SUM(
+            CASE 
+                WHEN DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < NOW()
+                THEN spp_221043.biaya_221043 * 0.05 * TIMESTAMPDIFF(MONTH, DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')), NOW())
+                ELSE 0
+            END
+        ) AS total_bayar,
+        CASE 
+            WHEN COUNT(CASE WHEN pembayaran_221043.status_221043 = 'pending' THEN 1 END) > 0 
+            THEN 'pending'
+            ELSE 'lunas'
+        END AS status_pembayaran
+    FROM 
+        pembayaran_221043 
+    JOIN 
+        siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+    JOIN 
+        kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
+    JOIN 
+        spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+    GROUP BY 
+        siswa_221043.id_221043
 ");
 
 ?>
@@ -203,7 +235,7 @@ JOIN
                             <th>Kelas</th>
                             <th>Biaya SPP</th>
                             <th>Bulan</th>
-                            <th>Jatuh Tempo</th>
+                            <th>Bulan Denda</th>
                             <th>Denda</th>
                             <th>Total Bayar</th>
                             <th>Status</th>
@@ -217,7 +249,7 @@ JOIN
                             <th>Kelas</th>
                             <th>Biaya SPP</th>
                             <th>Bulan</th>
-                            <th>Jatuh Tempo</th>
+                            <th>Bulan Denda</th>
                             <th>Denda</th>
                             <th>Total Bayar</th>
                             <th>Status</th>
@@ -225,77 +257,74 @@ JOIN
                       </tr>
                     </tfoot>
                     <tbody>
-                    <?php
-                        $no = 1;
-                        while($data = mysqli_fetch_array($tampil)):
-                            $denda = hitungDenda($data['tanggal_jatuh_tempo'], $data['biaya_spp']);
-                            $total_bayar = $data['biaya_spp'] + $denda;
+                      <?php
+                      $no = 1;
 
-                            $date = $data['bulan_221043']; // Nilai dari database, contoh: '11-2024'
-
-                            if ($date) {
-                                // Pisahkan bulan dan tahun
-                                list($month, $year) = explode('-', $date);
-                        
-                                // Array nama bulan dalam Bahasa Indonesia
-                                $bulan_indo = [
-                                    '01' => 'Januari',
-                                    '02' => 'Februari',
-                                    '03' => 'Maret',
-                                    '04' => 'April',
-                                    '05' => 'Mei',
-                                    '06' => 'Juni',
-                                    '07' => 'Juli',
-                                    '08' => 'Agustus',
-                                    '09' => 'September',
-                                    '10' => 'Oktober',
-                                    '11' => 'November',
-                                    '12' => 'Desember'
-                                ];
-                            } else {
-                                echo 'Tanggal tidak valid';
+                      function formatBulan($bulanPenuh) {
+                        $bulanArray = explode(',', $bulanPenuh);
+                        $output = '';
+                        $tahunSebelumnya = '';
+                        $bulanDalamTahun = [];
+                    
+                        foreach ($bulanArray as $bulan) {
+                            // Ambil nama bulan dan tahun
+                            $parts = explode(' ', trim($bulan));
+                            $bulanNama = $parts[0];
+                            $tahun = $parts[1];
+                    
+                            // Jika tahun berubah atau output kosong
+                            if ($tahun !== $tahunSebelumnya && !empty($bulanDalamTahun)) {
+                                // Tambahkan tahun sebelumnya dan bulan-bulannya ke output
+                                $output .= ($output ? ', ' : '') . $tahunSebelumnya . ' (' . implode(', ', $bulanDalamTahun) . ')';
+                                $bulanDalamTahun = [];
                             }
+                    
+                            $bulanDalamTahun[] = $bulanNama; // Tambahkan bulan ke dalam array
+                            $tahunSebelumnya = $tahun;
+                        }
+                    
+                        // Tambahkan tahun terakhir
+                        if (!empty($bulanDalamTahun)) {
+                            $output .= ($output ? ', ' : '') . $tahunSebelumnya . ' (' . implode(', ', $bulanDalamTahun) . ')';
+                        }
+                    
+                        return $output;
+                    }
+                    
 
-                        ?>
+                      while ($data = mysqli_fetch_array($tampil)) :
+                      ?>
                       <tr>
-                            <td><?= $no++ ?></td>
-                            <td><?= $data['nama_siswa'] ?></td>
-                            <td><?= $data['kelas'] ?></td>
-                            <td>Rp <?= number_format($data['biaya_spp'], 0, ',', '.') ?></td>
-                            <td><?= $data['bulan_221043'] ?></td>
-                            <td><?= $bulan_indo[$month] . ' ' . $year?></td>
-                            <td><?php 
-                                if ($denda > 0) {
-                                  echo '<span class="text-danger">Rp ' . number_format($denda, 0, ',', '.') . ' (5%)</span>';
-                                } else {
-                                    echo '-';
-                                }
-                            ?></td>
-                            <td>Rp <?= number_format($total_bayar, 0, ',', '.') ?></td>
-                            <td>
-                                <?php if ($data['status_221043'] == 'pending'): ?>
-                                    <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
-                                <?php else: ?>
-                                    <span class="badge badge-success"><?= $data['status_221043'] ?></span>
-                                <?php endif; ?>
-                            </td>
-
-                        <td>
-                            <a class="btn btn-success viewBukti" href="#" 
-                              data-toggle="modal" 
-                              data-target="#buktiModal"
-                              data-id="<?= $data['id_221043'] ?>"
-                              data-bukti="<?= $data['bukti_pembayaran_221043'] ?>"
-                              data-status="<?= $data['status_221043'] ?>">
-                                Lihat Bukti Pembayaran
-                            </a>
-                        </td>
-
+                          <td><?= $no++ ?></td>
+                          <td><?= $data['nama_siswa'] ?></td>
+                          <td><?= $data['kelas'] ?></td>
+                          <td>Rp <?= number_format($data['total_biaya_spp'], 0, ',', '.') ?></td>
+                          <td><?= formatBulan($data['bulan_pembayaran']) ?></td>
+                          <td><?= isset($data['bulan_denda']) && $data['bulan_denda'] ? formatBulan($data['bulan_denda']) : '-' ?></td>
+                          <td>Rp <?= number_format($data['total_denda'], 0, ',', '.') ?></td>
+                          <td>Rp <?= number_format($data['total_bayar'], 0, ',', '.') ?></td>
+                          <td>
+                              <?php if ($data['status_pembayaran'] == 'pending'): ?>
+                                  <span class="badge badge-warning"><?= $data['status_pembayaran'] ?></span>
+                              <?php else: ?>
+                                  <span class="badge badge-success"><?= $data['status_pembayaran'] ?></span>
+                              <?php endif; ?>
+                          </td>
+                          <td>
+                              <a class="btn btn-success viewBukti" href="#" 
+                                data-toggle="modal" 
+                                data-target="#buktiModal"
+                                data-id="<?= $data['id_siswa'] ?>"
+                                data-bukti="<?= $data['bukti_pembayaran'] ?>"
+                                data-status="<?= $data['status_pembayaran'] ?>">
+                                  Lihat Bukti Pembayaran
+                              </a>
+                          </td>
                       </tr>
                       <?php
                       endwhile; 
                       ?>
-                    </tbody>
+                      </tbody>
                   </table>
                 </div>
               </div>

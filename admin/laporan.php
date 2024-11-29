@@ -1,45 +1,224 @@
 <?php
-
 include '../koneksi.php';
-
+include('../tcpdf/tcpdf.php');
 session_start();
 
+// Authentication Check
 if($_SESSION['status'] != 'login'){
-
     session_unset();
     session_destroy();
-
     header("location:../");
-
+    exit();
 }
 
+/**
+ * Calculate Late Payment Fine
+ */
 function hitungDenda($tanggal_jatuh_tempo, $biaya_spp) {
-  $denda_per_bulan = 0.05; // 5% dari biaya SPP per bulan
-  $sekarang = new DateTime();
-  $jatuh_tempo = new DateTime($tanggal_jatuh_tempo);
-  
-  // Jika belum melewati tanggal jatuh tempo, tidak ada denda
-  if ($sekarang <= $jatuh_tempo) {
-      return 0;
-  }
-  
-  // Hitung selisih bulan
-  $interval = $jatuh_tempo->diff($sekarang);
-  $selisih_bulan = ($interval->y * 12) + $interval->m;
-  
-  // Hitung total denda
-  $total_denda = $biaya_spp * $denda_per_bulan * $selisih_bulan;
-  
-  return $total_denda;
+    $denda_per_bulan = 0.05; // 5% from monthly tuition per month
+    $sekarang = new DateTime();
+    $jatuh_tempo = new DateTime($tanggal_jatuh_tempo);
+    
+    // No fine if not past due date
+    if ($sekarang <= $jatuh_tempo) {
+        return 0;
+    }
+    
+    // Calculate month difference
+    $interval = $jatuh_tempo->diff($sekarang);
+    $selisih_bulan = ($interval->y * 12) + $interval->m;
+    
+    // Calculate total fine
+    $total_denda = $biaya_spp * $denda_per_bulan * $selisih_bulan;
+    
+    return $total_denda;
 }
 
+/**
+ * Custom TCPDF class to override Header and Footer
+ */
+class CustomPDF extends TCPDF {
+    private $start_date;
+    private $end_date;
 
-$tampil = mysqli_query($koneksi, "SELECT 
-    pembayaran_221043.*, 
+    public function __construct($start_date, $end_date) {
+        parent::__construct('L', PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+        $this->start_date = $start_date;
+        $this->end_date = $end_date;
+    }
+
+    public function Header() {
+        // Title
+        $this->SetFont('helvetica', 'B', 12);
+        $this->Cell(0, 15, 'Laporan Pembayarn Spp', 0, 1, 'C');
+        
+        // Reporting Period
+        $this->SetFont('helvetica', '', 10);
+        $this->Cell(0, 15, "Periode: {$this->start_date} sampai {$this->end_date}", 0, 1, 'C');
+    }
+
+    public function Footer() {
+        // Position from bottom
+        $this->SetY(-15);
+        $this->SetFont('helvetica', 'I', 8);
+        
+        // Page number
+        $this->Cell(0, 10, 'Page '.$this->getAliasNumPage().' of '.$this->getAliasNbPages(), 0, 0, 'C');
+    }
+}
+
+/**
+ * Generate Enhanced PDF Report
+ */
+function generateEnhancedPDF($data, $start_date, $end_date) {
+    // Create PDF with custom header/footer
+    $pdf = new CustomPDF($start_date, $end_date);
+
+    // Document Properties
+    $pdf->SetCreator('Laporan Pembayaran Spp');
+    $pdf->SetAuthor('Laporan Pembayaran Spp');
+    $pdf->SetTitle('Laporan Pembayaran Spp');
+    $pdf->SetSubject('Laporan Pembayaran Spp');
+
+    // Page Setup
+    $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+    $pdf->SetMargins(10, 40, 10);
+    $pdf->SetHeaderMargin(10);
+    $pdf->SetFooterMargin(10);
+    $pdf->SetAutoPageBreak(TRUE, 15);
+
+    // Add First Page
+    $pdf->AddPage();
+    $pdf->SetFont('helvetica', '', 9);
+
+    // HTML Table Generation (Same as previous version)
+    $html = '
+    <style>
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+        }
+        th { 
+            background-color: #f2f2f2; 
+            font-weight: bold; 
+            text-align: center; 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+        }
+        td { 
+            border: 1px solid #ddd; 
+            padding: 6px; 
+            text-align: center; 
+        }
+        tr:nth-child(even) { 
+            background-color: #f9f9f9; 
+        }
+    </style>
+    <table>
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="15%">Nama Siswa</th>
+                <th width="10%">Kelas</th>
+                <th width="12%">Biaya Spp</th>
+                <th width="15%">Bulan</th>
+                <th width="15%">Bulan Denda</th>
+                <th width="10%">Jumlah Denda</th>
+                <th width="10%">Total Pembayaran</th>
+                <th width="8%">Status</th>
+            </tr>
+        </thead>
+        <tbody>';
+
+    $no = 1;
+    $total_spp = 0;
+    $total_fine = 0;
+    $total_payment = 0;
+
+    while ($row = mysqli_fetch_assoc($data)) {
+        $html .= '<tr>';
+        $html .= '<td width="5%">'.htmlspecialchars($no++).'</td>';
+        $html .= '<td width="15%">'.htmlspecialchars($row['nama_siswa']).'</td>';
+        $html .= '<td width="10%">'.htmlspecialchars($row['kelas']).'</td>';
+        $html .= '<td width="12%">Rp '.number_format($row['total_biaya_spp'], 0, ',', '.').'</td>';
+        $html .= '<td width="15%">'.htmlspecialchars($row['bulan_pembayaran']).'</td>';
+        $html .= '<td width="15%">'.htmlspecialchars($row['bulan_denda'] ?? '-').'</td>';
+        $html .= '<td width="10%">Rp '.number_format($row['total_denda'], 0, ',', '.').'</td>';
+        $html .= '<td width="10%">Rp '.number_format($row['total_bayar'], 0, ',', '.').'</td>';
+        $html .= '<td width="8%">'.htmlspecialchars($row['status_pembayaran']).'</td>';
+        $html .= '</tr>';
+
+        // Accumulate totals
+        $total_spp += $row['total_biaya_spp'];
+        $total_fine += $row['total_denda'];
+        $total_payment += $row['total_bayar'];
+    }
+
+    // Add Summary Row
+    $html .= '
+        <tr style="font-weight: bold; background-color: #e6e6e6;">
+            <td colspan="3">TOTAL</td>
+            <td>Rp '.number_format($total_spp, 0, ',', '.').'</td>
+            <td colspan="2"></td>
+            <td>Rp '.number_format($total_fine, 0, ',', '.').'</td>
+            <td>Rp '.number_format($total_payment, 0, ',', '.').'</td>
+            <td></td>
+        </tr>
+    </tbody></table>';
+
+    // Print HTML Table
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    // Output PDF
+    $pdf->Output('comprehensive_spp_report.pdf', 'I');
+}
+
+// Default Date Range - Current Month
+$start_date = date('Y-m-01');
+$end_date = date('Y-m-t');
+
+// Date Filter Handling
+if(isset($_POST['filter_tanggal'])) {
+    $start_date = $_POST['start_date'];
+    $end_date = $_POST['end_date'];
+}
+
+// Comprehensive Payment Query
+$query = "SELECT 
+    siswa_221043.id_221043 AS id_siswa,
+    pembayaran_221043.id_221043 AS id,
+    pembayaran_221043.bukti_pembayaran_221043 AS bukti_pembayaran,
     siswa_221043.nama_221043 AS nama_siswa, 
-    spp_221043.biaya_221043 AS biaya_spp,
     kelas_221043.kelas_221043 AS kelas,
-    DATE_FORMAT(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%Y-%m-%d') as tanggal_jatuh_tempo
+    GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y') ORDER BY pembayaran_221043.bulan_221043 ASC) AS bulan_pembayaran,
+    SUM(spp_221043.biaya_221043) AS total_biaya_spp,
+    SUM(
+        CASE 
+            WHEN DATE(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < NOW()
+            THEN spp_221043.biaya_221043 * 0.05 * TIMESTAMPDIFF(MONTH, DATE(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')), NOW())
+            ELSE 0
+        END
+    ) AS total_denda,
+    GROUP_CONCAT(
+        DISTINCT CASE 
+            WHEN DATE(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < DATE_FORMAT(NOW(), '%Y-%m-01')
+            THEN DATE_FORMAT(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y')
+            ELSE NULL
+        END
+        ORDER BY pembayaran_221043.bulan_221043 ASC
+    ) AS bulan_denda,
+    SUM(spp_221043.biaya_221043) + SUM(
+        CASE 
+            WHEN DATE(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < NOW()
+            THEN spp_221043.biaya_221043 * 0.05 * TIMESTAMPDIFF(MONTH, DATE(CONCAT('2024-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')), NOW())
+            ELSE 0
+        END
+    ) AS total_bayar,
+    CASE 
+        WHEN COUNT(CASE WHEN pembayaran_221043.status_221043 = 'pending' THEN 1 END) > 0 
+        THEN 'pending'
+        ELSE 'lunas'
+    END AS status_pembayaran
 FROM 
     pembayaran_221043 
 JOIN 
@@ -48,9 +227,28 @@ JOIN
     kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
 JOIN 
     spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
-    WHERE pembayaran_221043.status_221043 = 'lunas'
-");
+WHERE 
+    pembayaran_221043.tanggal_bayar_221043 BETWEEN ? AND ?
+GROUP BY 
+    siswa_221043.id_221043";
 
+// PDF Export Handling
+if(isset($_POST['cetak_pdf'])) {
+    // Prepare statement
+    $stmt = mysqli_prepare($koneksi, $query);
+    mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    generateEnhancedPDF($result, $start_date, $end_date);
+    exit();
+}
+
+// Prepare statement for displaying data
+$stmt = mysqli_prepare($koneksi, $query);
+mysqli_stmt_bind_param($stmt, "ss", $start_date, $end_date);
+mysqli_stmt_execute($stmt);
+$tampil = mysqli_stmt_get_result($stmt);
 ?>
 
 
@@ -183,83 +381,38 @@ JOIN
 
         <!-- Container Fluid-->
         <div class="container-fluid" id="container-wrapper">
-
+          <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Data Laporan</h1>
+          </div>
+          <div class="container-fluid" id="container-wrapper">
         <div class="card mb-4">
             <div class="card-header">
-                Filter Laporan Pembayaran
+                Filter Laporan
             </div>
             <div class="card-body">
-                <form action="laporan_pdf.php" target="_blank" method="GET">
+                <form method="POST">
                     <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Kelas</label>
-                                <select name="kelas" class="form-control">
-                                    <option value="">Semua Kelas</option>
-                                    <?php
-                                    $kelas_query = mysqli_query($koneksi, "SELECT DISTINCT kelas_221043 FROM kelas_221043");
-                                    while($kelas = mysqli_fetch_array($kelas_query)) {
-                                        echo "<option value='".$kelas['kelas_221043']."'>".$kelas['kelas_221043']."</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
+                        <div class="col-md-4">
+                            <label>Tanggal Mulai</label>
+                            <input type="date" name="start_date" class="form-control" value="<?= $start_date ?>">
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Bulan</label>
-                                <select name="bulan" class="form-control">
-                                    <option value="">Semua Bulan</option>
-                                    <?php
-                                    $bulan_indo = [
-                                        '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
-                                        '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
-                                        '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
-                                    ];
-                                    foreach($bulan_indo as $angka => $nama) {
-                                        echo "<option value='".$angka."'>".$nama."</option>";
-                                    }
-                                    ?>
-                                </select>
-                            </div>
+                        <div class="col-md-4">
+                            <label>Tanggal Selesai</label>
+                            <input type="date" name="end_date" class="form-control" value="<?= $end_date ?>">
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Tahun</label>
-                                <select name="tahun" class="form-control">
-                                    <option value="">Semua Tahun</option>
-                                    <?php
-                                    $tahun_query = mysqli_query($koneksi, "SELECT DISTINCT SUBSTRING(bulan_221043, 4, 4) as tahun FROM pembayaran_221043");
-                                    $tahun_list = [];
-                                    while($tahun = mysqli_fetch_array($tahun_query)) {
-                                        if (!in_array($tahun['tahun'], $tahun_list)) {
-                                            $tahun_list[] = $tahun['tahun'];
-                                            echo "<option value='".$tahun['tahun']."'>".$tahun['tahun']."</option>";
-                                        }
-                                    }
-                                    ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div  class="col-md-3 align-self-end">
-                            <button style="margin-top:-55px !important;" type="submit" class="btn btn-primary mr-2">Cetak PDF</button>
+                        <div class="col-md-4 align-self-end">
+                            <button type="submit" name="filter_tanggal" class="btn btn-primary mr-2">Filter</button>
+                            <button type="submit" name="cetak_pdf" class="btn btn-success">Cetak PDF</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
-
-          <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Data Laporan</h1>
-          </div>
-
           <!-- Row -->
           <div class="row">
             <!-- Datatables -->
             <div class="col-lg-12">
               <div class="card mb-4">
-              <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                </div>
                 <div class="table-responsive p-3">
                   <table class="table align-items-center table-flush" id="dataTable">
                     <thead class="thead-light">
@@ -269,7 +422,7 @@ JOIN
                             <th>Kelas</th>
                             <th>Biaya SPP</th>
                             <th>Bulan</th>
-                            <th>Jatuh Tempo</th>
+                            <th>Bulan Denda</th>
                             <th>Denda</th>
                             <th>Total Bayar</th>
                             <th>Status</th>
@@ -282,73 +435,71 @@ JOIN
                             <th>Kelas</th>
                             <th>Biaya SPP</th>
                             <th>Bulan</th>
-                            <th>Jatuh Tempo</th>
+                            <th>Bulan Denda</th>
                             <th>Denda</th>
                             <th>Total Bayar</th>
                             <th>Status</th>
                       </tr>
                     </tfoot>
                     <tbody>
-                    <?php
-                        $no = 1;
-                        while($data = mysqli_fetch_array($tampil)):
-                            $denda = hitungDenda($data['tanggal_jatuh_tempo'], $data['biaya_spp']);
-                            $total_bayar = $data['biaya_spp'] + $denda;
+                      <?php
+                      $no = 1;
 
-                            $date = $data['bulan_221043']; // Nilai dari database, contoh: '11-2024'
-
-                            if ($date) {
-                                // Pisahkan bulan dan tahun
-                                list($month, $year) = explode('-', $date);
-                        
-                                // Array nama bulan dalam Bahasa Indonesia
-                                $bulan_indo = [
-                                    '01' => 'Januari',
-                                    '02' => 'Februari',
-                                    '03' => 'Maret',
-                                    '04' => 'April',
-                                    '05' => 'Mei',
-                                    '06' => 'Juni',
-                                    '07' => 'Juli',
-                                    '08' => 'Agustus',
-                                    '09' => 'September',
-                                    '10' => 'Oktober',
-                                    '11' => 'November',
-                                    '12' => 'Desember'
-                                ];
-                            } else {
-                                echo 'Tanggal tidak valid';
+                      function formatBulan($bulanPenuh) {
+                        $bulanArray = explode(',', $bulanPenuh);
+                        $output = '';
+                        $tahunSebelumnya = '';
+                        $bulanDalamTahun = [];
+                    
+                        foreach ($bulanArray as $bulan) {
+                            // Ambil nama bulan dan tahun
+                            $parts = explode(' ', trim($bulan));
+                            $bulanNama = $parts[0];
+                            $tahun = $parts[1];
+                    
+                            // Jika tahun berubah atau output kosong
+                            if ($tahun !== $tahunSebelumnya && !empty($bulanDalamTahun)) {
+                                // Tambahkan tahun sebelumnya dan bulan-bulannya ke output
+                                $output .= ($output ? ', ' : '') . $tahunSebelumnya . ' (' . implode(', ', $bulanDalamTahun) . ')';
+                                $bulanDalamTahun = [];
                             }
+                    
+                            $bulanDalamTahun[] = $bulanNama; // Tambahkan bulan ke dalam array
+                            $tahunSebelumnya = $tahun;
+                        }
+                    
+                        // Tambahkan tahun terakhir
+                        if (!empty($bulanDalamTahun)) {
+                            $output .= ($output ? ', ' : '') . $tahunSebelumnya . ' (' . implode(', ', $bulanDalamTahun) . ')';
+                        }
+                    
+                        return $output;
+                    }
+                    
 
-                        ?>
+                      while ($data = mysqli_fetch_array($tampil)) :
+                      ?>
                       <tr>
-                            <td><?= $no++ ?></td>
-                            <td><?= $data['nama_siswa'] ?></td>
-                            <td><?= $data['kelas'] ?></td>
-                            <td>Rp <?= number_format($data['biaya_spp'], 0, ',', '.') ?></td>
-                            <td><?= $data['bulan_221043'] ?></td>
-                            <td><?= $bulan_indo[$month] . ' ' . $year?></td>
-                            <td><?php 
-                                if ($denda > 0) {
-                                  echo '<span class="text-danger">Rp ' . number_format($denda, 0, ',', '.') . ' (5%)</span>';
-                                } else {
-                                    echo '-';
-                                }
-                            ?></td>
-                            <td>Rp <?= number_format($total_bayar, 0, ',', '.') ?></td>
-                            <td>
-                                <?php if ($data['status_221043'] == 'pending'): ?>
-                                    <span class="badge badge-warning"><?= $data['status_221043'] ?></span>
-                                <?php else: ?>
-                                    <span class="badge badge-success"><?= $data['status_221043'] ?></span>
-                                <?php endif; ?>
-                            </td>
-
+                          <td><?= $no++ ?></td>
+                          <td><?= $data['nama_siswa'] ?></td>
+                          <td><?= $data['kelas'] ?></td>
+                          <td>Rp <?= number_format($data['total_biaya_spp'], 0, ',', '.') ?></td>
+                          <td><?= formatBulan($data['bulan_pembayaran']) ?></td>
+                          <td><?= isset($data['bulan_denda']) && $data['bulan_denda'] ? formatBulan($data['bulan_denda']) : '-' ?></td>
+                          <td>Rp <?= number_format($data['total_denda'], 0, ',', '.') ?></td>
+                          <td>Rp <?= number_format($data['total_bayar'], 0, ',', '.') ?></td>
+                          <td>
+                              <?php if ($data['status_pembayaran'] == 'pending'): ?>
+                                  <span class="badge badge-warning"><?= $data['status_pembayaran'] ?></span>
+                              <?php else: ?>
+                                  <span class="badge badge-success"><?= $data['status_pembayaran'] ?></span>
+                              <?php endif; ?>
+                          </td>
                       </tr>
                       <?php
                       endwhile; 
                       ?>
-                    </tbody>
+                      </tbody>
                   </table>
                 </div>
               </div>
@@ -452,22 +603,6 @@ JOIN
     });
   </script>
 
-<script>
-$(document).ready(function() {
-    // Handle modal open
-    $('.viewBukti').on('click', function() {
-        const id = $(this).data('id');
-        const bukti = $(this).data('bukti');
-        const status = $(this).data('status');
-        
-        $('#pembayaranId').val(id);
-        $('#buktiImage').attr('src', '../orangtua/' + bukti);
-        $('#statusPembayaran').val(status);
-    });
-    
-   
-});
-</script>
 
 </body>
 
