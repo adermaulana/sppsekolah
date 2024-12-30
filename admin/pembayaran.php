@@ -267,7 +267,6 @@ function formatMonth($month) {
                                                 <th>Kelas</th>
                                                 <th>Biaya SPP</th>
                                                 <th>Bulan</th>
-                                                <th>Bulan Denda</th>
                                                 <th>Denda</th>
                                                 <th>Total Bayar</th>
                                                 <th>Status</th>
@@ -281,7 +280,6 @@ function formatMonth($month) {
                                                 <th>Kelas</th>
                                                 <th>Biaya SPP</th>
                                                 <th>Bulan</th>
-                                                <th>Bulan Denda</th>
                                                 <th>Denda</th>
                                                 <th>Total Bayar</th>
                                                 <th>Status</th>
@@ -317,7 +315,6 @@ function formatMonth($month) {
                                                 <td><?= $data['kelas'] ?></td>
                                                 <td>Rp <?= number_format($data['total_biaya_spp'], 0, ',', '.') ?></td>
                                                 <td><?= formatBulan($data['bulan_pembayaran']) ?></td>
-                                                <td><?= isset($data['bulan_denda']) && $data['bulan_denda'] ? formatBulan($data['bulan_denda']) : '-' ?>
                                                 </td>
                                                 <td>
                                                     <?php if ($data['status_pembayaran'] == 'pending'): ?>
