@@ -336,7 +336,8 @@ function formatMonth($month) {
                                                 <td>
                                                     <a class="btn btn-success viewBukti" href="#"
                                                         data-toggle="modal" data-target="#buktiModal"
-                                                        data-payment="<?= $data['payment_data'] ?>">
+                                                        data-payment="<?= $data['payment_data'] ?>"
+                                                        data-id="<?= $data['id_siswa'] ?>">
                                                         Lihat Bukti Pembayaran
                                                     </a>
                                                 </td>
@@ -466,9 +467,11 @@ function formatMonth($month) {
 <script>
 $(document).ready(function() {
     $('.viewBukti').on('click', function() {
+        const id = $(this).data('id');
         const paymentData = $(this).data('payment');
         const monthSelect = $('#bulanPembayaran');
         
+        $('#pembayaranId').val(id);
         // Clear existing options
         monthSelect.empty();
         
