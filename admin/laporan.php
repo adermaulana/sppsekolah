@@ -163,7 +163,7 @@ function generateEnhancedPDF($data, $start_date, $end_date)
     $html .=
         '
         <tr style="font-weight: bold; background-color: #e6e6e6;">
-            <td colspan="3">TOTAL</td>
+            <td colspan="2">TOTAL</td>
             <td>Rp ' .
         number_format($total_spp, 0, ',', '.') .
         '</td>
