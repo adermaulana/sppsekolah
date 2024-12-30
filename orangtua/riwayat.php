@@ -266,9 +266,7 @@ if($_SESSION['status'] != 'login'){
                     '11' => 'November',
                     '12' => 'Desember'
                 ];
-        
-                // Tampilkan nama bulan dan tahun
-                echo $bulan_indo[$month] . ' ' . $year;
+
             } else {
                 echo 'Tanggal tidak valid';
             }

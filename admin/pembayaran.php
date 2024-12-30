@@ -42,7 +42,8 @@ $tampil = mysqli_query(
         pembayaran_221043.bukti_pembayaran_221043 AS bukti_pembayaran,
         siswa_221043.nama_221043 AS nama_siswa, 
         kelas_221043.kelas_221043 AS kelas,
-        GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y') ORDER BY pembayaran_221043.bulan_221043 ASC) AS bulan_pembayaran,
+        GROUP_CONCAT(pembayaran_221043.bukti_pembayaran_221043 ORDER BY pembayaran_221043.bulan_221043 ASC) AS bukti_pembayaran,
+GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y') ORDER BY pembayaran_221043.bulan_221043 ASC) AS bulan_pembayaran,
         SUM(spp_221043.biaya_221043) AS total_biaya_spp,
         SUM(
             CASE 
@@ -264,42 +265,42 @@ $tampil = mysqli_query(
                                         </tfoot>
                                         <tbody>
                                             <?php
-                      $no = 1;
+                                                $no = 1;
 
-                      function formatBulan($bulanPenuh) {
-                          $bulanArray = explode(',', $bulanPenuh);
-                          
-                          if (empty($bulanArray)) return '-';
-                          
-                          // Sort the months to ensure correct order
-                          usort($bulanArray, function($a, $b) {
-                              $monthOrder = [
-                                  'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 
-                                  'May' => 5, 'June' => 6, 'July' => 7, 'August' => 8, 
-                                  'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12
-                              ];
-                              
-                              $partsA = explode(' ', trim($a));
-                              $partsB = explode(' ', trim($b));
-                              
-                              return $monthOrder[$partsA[0]] - $monthOrder[$partsB[0]];
-                          });
-                          
-                          $firstMonth = explode(' ', $bulanArray[0]);
-                          $lastMonth = explode(' ', $bulanArray[count($bulanArray) - 1]);
-                          
-                          // If only one month, return that month
-                          if (count($bulanArray) == 1) {
-                              return $firstMonth[0] . ' ' . $firstMonth[1];
-                          }
-                          
-                          // Return range of months
-                          return $firstMonth[0] . ' - ' . $lastMonth[0] . ' ' . $lastMonth[1];
-                      }
-                    
+                                                function formatBulan($bulanPenuh) {
+                                                    $bulanArray = explode(',', $bulanPenuh);
+                                                    
+                                                    if (empty($bulanArray)) return '-';
+                                                    
+                                                    // Sort the months to ensure correct order
+                                                    usort($bulanArray, function($a, $b) {
+                                                        $monthOrder = [
+                                                            'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 
+                                                            'May' => 5, 'June' => 6, 'July' => 7, 'August' => 8, 
+                                                            'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12
+                                                        ];
+                                                        
+                                                        $partsA = explode(' ', trim($a));
+                                                        $partsB = explode(' ', trim($b));
+                                                        
+                                                        return $monthOrder[$partsA[0]] - $monthOrder[$partsB[0]];
+                                                    });
+                                                    
+                                                    $firstMonth = explode(' ', $bulanArray[0]);
+                                                    $lastMonth = explode(' ', $bulanArray[count($bulanArray) - 1]);
+                                                    
+                                                    // If only one month, return that month
+                                                    if (count($bulanArray) == 1) {
+                                                        return $firstMonth[0] . ' ' . $firstMonth[1];
+                                                    }
+                                                    
+                                                    // Return range of months
+                                                    return $firstMonth[0] . ' - ' . $lastMonth[0] . ' ' . $lastMonth[1];
+                                                }
+                                                
 
-                      while ($data = mysqli_fetch_array($tampil)) :
-                      ?>
+                                                while ($data = mysqli_fetch_array($tampil)) :
+                                                ?>
                                             <tr>
                                                 <td><?= $no++ ?></td>
                                                 <td><?= $data['nama_siswa'] ?></td>
@@ -330,14 +331,14 @@ $tampil = mysqli_query(
                                                         data-toggle="modal" data-target="#buktiModal"
                                                         data-id="<?= $data['id_siswa'] ?>"
                                                         data-bukti="<?= $data['bukti_pembayaran'] ?>"
-                                                        data-status="<?= $data['status_pembayaran'] ?>">
+                                                        data-bulan="<?= $data['bulan_pembayaran'] ?>">
                                                         Lihat Bukti Pembayaran
                                                     </a>
                                                 </td>
                                             </tr>
                                             <?php
-                      endwhile; 
-                      ?>
+                                            endwhile; 
+                                            ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -358,7 +359,15 @@ $tampil = mysqli_query(
                                     </button>
                                 </div>
                                 <div class="modal-body">
-                                    <img id="buktiImage" src="" alt="Bukti Pembayaran" class="img-fluid">
+                                    <h6>Pilih Bulan Pembayaran</h6>
+                                    <select class="form-control" id="bulanPembayaran">
+                                        <!-- Bulan pembayaran akan diisi secara dinamis -->
+                                    </select>
+                                    <div class="mt-3">
+                                        <h6>Bukti Pembayaran</h6>
+                                        <img id="buktiImage" src="" alt="Bukti Pembayaran"
+                                            class="img-fluid">
+                                    </div>
                                     <div id="statusSection" class="mt-3">
                                         <h6>Status Pembayaran</h6>
                                         <form action="update_status.php" method="POST">
@@ -455,15 +464,30 @@ $tampil = mysqli_query(
             // Handle modal open
             $('.viewBukti').on('click', function() {
                 const id = $(this).data('id');
-                const bukti = $(this).data('bukti');
-                const status = $(this).data('status');
+                const buktiList = $(this).data('bukti'); // Array bukti pembayaran
+                const bulanList = $(this).data('bulan'); // Array bulan pembayaran
 
-                $('#pembayaranId').val(id);
-                $('#buktiImage').attr('src', '../orangtua/' + bukti);
-                $('#statusPembayaran').val(status);
+                // Split bukti dan bulan menjadi array
+                const buktiArray = buktiList.split(',');
+                const bulanArray = bulanList.split(',');
+
+                // Reset dropdown
+                $('#bulanPembayaran').empty();
+                bulanArray.forEach((bulan, index) => {
+                    $('#bulanPembayaran').append(
+                        `<option value="${index}">${bulan.trim()}</option>`);
+                });
+
+                // Set default image for the first month
+                $('#buktiImage').attr('src', '../orangtua/' + buktiArray[0]);
+
+                // Update bukti pembayaran based on selected month
+                $('#bulanPembayaran').on('change', function() {
+                    const selectedIndex = $(this).val();
+                    const selectedBukti = buktiArray[selectedIndex];
+                    $('#buktiImage').attr('src', '../orangtua/' + selectedBukti);
+                });
             });
-
-
         });
     </script>
 
