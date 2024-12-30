@@ -129,7 +129,6 @@ function generateEnhancedPDF($data, $start_date, $end_date)
                 <th width="10%">Kelas</th>
                 <th width="12%">Biaya Spp</th>
                 <th width="15%">Bulan</th>
-                <th width="15%">Bulan Denda</th>
                 <th width="10%">Jumlah Denda</th>
                 <th width="10%">Total Pembayaran</th>
                 <th width="8%">Status</th>
@@ -149,7 +148,6 @@ function generateEnhancedPDF($data, $start_date, $end_date)
         $html .= '<td width="10%">' . htmlspecialchars($row['kelas']) . '</td>';
         $html .= '<td width="12%">Rp ' . number_format($row['total_biaya_spp'], 0, ',', '.') . '</td>';
         $html .= '<td width="15%">' . htmlspecialchars(formatBulan($row['bulan_pembayaran'])) . '</td>';
-        $html .= '<td width="15%">' . htmlspecialchars(formatBulan($row['bulan_denda'] ?? '-')) . '</td>';
         $html .= '<td width="10%">Rp ' . number_format($row['total_denda'], 0, ',', '.') . '</td>';
         $html .= '<td width="10%">Rp ' . number_format($row['total_bayar'], 0, ',', '.') . '</td>';
         $html .= '<td width="8%">' . htmlspecialchars($row['status_pembayaran']) . '</td>';
