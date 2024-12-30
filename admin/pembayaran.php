@@ -37,53 +37,78 @@ $tahun = date('Y');
 $tampil = mysqli_query(
     $koneksi,
     "SELECT 
-        siswa_221043.id_221043 AS id_siswa,
-        pembayaran_221043.id_221043 AS id,
-        pembayaran_221043.bukti_pembayaran_221043 AS bukti_pembayaran,
-        siswa_221043.nama_221043 AS nama_siswa, 
-        kelas_221043.kelas_221043 AS kelas,
-        GROUP_CONCAT(pembayaran_221043.bukti_pembayaran_221043 ORDER BY pembayaran_221043.bulan_221043 ASC) AS bukti_pembayaran,
-GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y') ORDER BY pembayaran_221043.bulan_221043 ASC) AS bulan_pembayaran,
-        SUM(spp_221043.biaya_221043) AS total_biaya_spp,
-        SUM(
-            CASE 
-                WHEN DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < NOW()
-                THEN spp_221043.biaya_221043 * 0.05 * TIMESTAMPDIFF(MONTH, DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')), NOW())
-                ELSE 0
-            END
-        ) AS total_denda,
-        GROUP_CONCAT(
-            DISTINCT CASE 
-                WHEN DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < DATE_FORMAT(NOW(), '%Y-%m-01')
-                THEN DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01'), '%M %Y')
-                ELSE NULL
-            END
-            ORDER BY pembayaran_221043.bulan_221043 ASC
-        ) AS bulan_denda,
-        SUM(spp_221043.biaya_221043) + SUM(
-            CASE 
-                WHEN DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')) < NOW()
-                THEN spp_221043.biaya_221043 * 0.05 * TIMESTAMPDIFF(MONTH, DATE(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.bulan_221043, 1, 2), '-01')), NOW())
-                ELSE 0
-            END
-        ) AS total_bayar,
+    siswa_221043.id_221043 AS id_siswa,
+    siswa_221043.nama_221043 AS nama_siswa, 
+    kelas_221043.kelas_221043 AS kelas,
+    GROUP_CONCAT(
+        CONCAT(
+            pembayaran_221043.bulan_221043, ':', 
+            pembayaran_221043.bukti_pembayaran_221043
+        )
+        ORDER BY STR_TO_DATE(
+            CONCAT('01-', REPLACE(pembayaran_221043.bulan_221043, '-', ' ')),
+            '%d-%m %Y'
+        )
+    ) AS payment_data,
+    GROUP_CONCAT(
+        pembayaran_221043.bulan_221043
+        ORDER BY STR_TO_DATE(
+            CONCAT('01-', REPLACE(pembayaran_221043.bulan_221043, '-', ' ')),
+            '%d-%m %Y'
+        )
+    ) AS bulan_pembayaran,
+    SUM(spp_221043.biaya_221043) AS total_biaya_spp,
+    SUM(
         CASE 
-            WHEN COUNT(CASE WHEN pembayaran_221043.status_221043 = 'pending' THEN 1 END) > 0 
-            THEN 'pending'
-            ELSE 'lunas'
-        END AS status_pembayaran
-    FROM 
-        pembayaran_221043 
-    JOIN 
-        siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
-    JOIN 
-        kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
-    JOIN 
-        spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
-    GROUP BY 
-        siswa_221043.id_221043
-",
+            WHEN STR_TO_DATE(CONCAT('01-', REPLACE(pembayaran_221043.bulan_221043, '-', ' ')), '%d-%m %Y') < NOW()
+            THEN spp_221043.biaya_221043 * 0.05 * 
+                 TIMESTAMPDIFF(MONTH, 
+                    STR_TO_DATE(CONCAT('01-', REPLACE(pembayaran_221043.bulan_221043, '-', ' ')), '%d-%m %Y'),
+                    NOW()
+                 )
+            ELSE 0
+        END
+    ) AS total_denda,
+    SUM(spp_221043.biaya_221043) + 
+    SUM(
+        CASE 
+            WHEN STR_TO_DATE(CONCAT('01-', REPLACE(pembayaran_221043.bulan_221043, '-', ' ')), '%d-%m %Y') < NOW()
+            THEN spp_221043.biaya_221043 * 0.05 * 
+                 TIMESTAMPDIFF(MONTH, 
+                    STR_TO_DATE(CONCAT('01-', REPLACE(pembayaran_221043.bulan_221043, '-', ' ')), '%d-%m %Y'),
+                    NOW()
+                 )
+            ELSE 0
+        END
+    ) AS total_bayar,
+    CASE 
+        WHEN COUNT(CASE WHEN pembayaran_221043.status_221043 = 'pending' THEN 1 END) > 0 
+        THEN 'pending'
+        ELSE 'lunas'
+    END AS status_pembayaran
+FROM 
+    pembayaran_221043 
+JOIN 
+    siswa_221043 ON pembayaran_221043.siswa_id_221043 = siswa_221043.id_221043 
+JOIN 
+    kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043 
+JOIN 
+    spp_221043 ON siswa_221043.id_kelas_221043 = spp_221043.id_kelas_221043
+GROUP BY 
+    siswa_221043.id_221043"
 );
+
+// Function to format the month display
+function formatMonth($month) {
+    $parts = explode('-', $month);
+    $monthNames = [
+        '01' => 'January', '02' => 'February', '03' => 'March',
+        '04' => 'April', '05' => 'May', '06' => 'June',
+        '07' => 'July', '08' => 'August', '09' => 'September',
+        '10' => 'October', '11' => 'November', '12' => 'December'
+    ];
+    return $monthNames[$parts[0]] . ' ' . $parts[1];
+}
 
 ?>
 
@@ -267,35 +292,20 @@ GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.
                                             <?php
                                                 $no = 1;
 
-                                                function formatBulan($bulanPenuh) {
+                                              function formatBulan($bulanPenuh) {
+                                                    if (empty($bulanPenuh)) return '-';
+                                                    
                                                     $bulanArray = explode(',', $bulanPenuh);
+                                                    $bulanArray = array_filter($bulanArray, 'trim');
                                                     
-                                                    if (empty($bulanArray)) return '-';
-                                                    
-                                                    // Sort the months to ensure correct order
-                                                    usort($bulanArray, function($a, $b) {
-                                                        $monthOrder = [
-                                                            'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4, 
-                                                            'May' => 5, 'June' => 6, 'July' => 7, 'August' => 8, 
-                                                            'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12
-                                                        ];
-                                                        
-                                                        $partsA = explode(' ', trim($a));
-                                                        $partsB = explode(' ', trim($b));
-                                                        
-                                                        return $monthOrder[$partsA[0]] - $monthOrder[$partsB[0]];
-                                                    });
-                                                    
-                                                    $firstMonth = explode(' ', $bulanArray[0]);
-                                                    $lastMonth = explode(' ', $bulanArray[count($bulanArray) - 1]);
-                                                    
-                                                    // If only one month, return that month
                                                     if (count($bulanArray) == 1) {
-                                                        return $firstMonth[0] . ' ' . $firstMonth[1];
+                                                        return trim($bulanArray[0]);
                                                     }
                                                     
-                                                    // Return range of months
-                                                    return $firstMonth[0] . ' - ' . $lastMonth[0] . ' ' . $lastMonth[1];
+                                                    $firstMonth = trim($bulanArray[0]);
+                                                    $lastMonth = trim($bulanArray[count($bulanArray) - 1]);
+                                                    
+                                                    return $firstMonth . ' - ' . $lastMonth;
                                                 }
                                                 
 
@@ -329,9 +339,7 @@ GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.
                                                 <td>
                                                     <a class="btn btn-success viewBukti" href="#"
                                                         data-toggle="modal" data-target="#buktiModal"
-                                                        data-id="<?= $data['id_siswa'] ?>"
-                                                        data-bukti="<?= $data['bukti_pembayaran'] ?>"
-                                                        data-bulan="<?= $data['bulan_pembayaran'] ?>">
+                                                        data-payment="<?= $data['payment_data'] ?>">
                                                         Lihat Bukti Pembayaran
                                                     </a>
                                                 </td>
@@ -361,7 +369,6 @@ GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.
                                 <div class="modal-body">
                                     <h6>Pilih Bulan Pembayaran</h6>
                                     <select class="form-control" id="bulanPembayaran">
-                                        <!-- Bulan pembayaran akan diisi secara dinamis -->
                                     </select>
                                     <div class="mt-3">
                                         <h6>Bukti Pembayaran</h6>
@@ -459,37 +466,65 @@ GROUP_CONCAT(DISTINCT DATE_FORMAT(CONCAT('$tahun-', SUBSTRING(pembayaran_221043.
         });
     </script>
 
-    <script>
-        $(document).ready(function() {
-            // Handle modal open
-            $('.viewBukti').on('click', function() {
-                const id = $(this).data('id');
-                const buktiList = $(this).data('bukti'); // Array bukti pembayaran
-                const bulanList = $(this).data('bulan'); // Array bulan pembayaran
-
-                // Split bukti dan bulan menjadi array
-                const buktiArray = buktiList.split(',');
-                const bulanArray = bulanList.split(',');
-
-                // Reset dropdown
-                $('#bulanPembayaran').empty();
-                bulanArray.forEach((bulan, index) => {
-                    $('#bulanPembayaran').append(
-                        `<option value="${index}">${bulan.trim()}</option>`);
-                });
-
-                // Set default image for the first month
-                $('#buktiImage').attr('src', '../orangtua/' + buktiArray[0]);
-
-                // Update bukti pembayaran based on selected month
-                $('#bulanPembayaran').on('change', function() {
-                    const selectedIndex = $(this).val();
-                    const selectedBukti = buktiArray[selectedIndex];
-                    $('#buktiImage').attr('src', '../orangtua/' + selectedBukti);
-                });
-            });
+<script>
+$(document).ready(function() {
+    $('.viewBukti').on('click', function() {
+        const paymentData = $(this).data('payment');
+        const monthSelect = $('#bulanPembayaran');
+        
+        // Clear existing options
+        monthSelect.empty();
+        
+        // Check if payment data exists and is not empty
+        if (!paymentData) {
+            // If no payment data, show message and disable select
+            monthSelect.append('<option>Belum ada bukti pembayaran yang diupload</option>');
+            monthSelect.prop('disabled', true);
+            $('#buktiImage').hide();
+            return;
+        }
+        
+        // Split payment data and process normally if exists
+        const paymentArray = paymentData.split(',');
+        
+        // Create month-image mapping
+        const monthImageMap = new Map();
+        paymentArray.forEach(item => {
+            const [monthYear, imagePath] = item.split(':');
+            const formattedMonth = formatMonthForDisplay(monthYear);
+            monthImageMap.set(monthYear, imagePath);
+            monthSelect.append(`<option value="${monthYear}">${formattedMonth}</option>`);
         });
-    </script>
+        
+        // Enable select and show image container
+        monthSelect.prop('disabled', false);
+        $('#buktiImage').show();
+        
+        // Handle month selection change
+        monthSelect.off('change').on('change', function() {
+            const selectedMonth = $(this).val();
+            const imagePath = monthImageMap.get(selectedMonth);
+            $('#buktiImage').attr('src', '../orangtua/' + imagePath);
+        });
+        
+        // Set initial image
+        const initialMonth = monthSelect.val();
+        const initialImage = monthImageMap.get(initialMonth);
+        $('#buktiImage').attr('src', '../orangtua/' + initialImage);
+    });
+});
+
+function formatMonthForDisplay(monthYear) {
+    const [month, year] = monthYear.split('-');
+    const monthNames = {
+        '01': 'January', '02': 'February', '03': 'March',
+        '04': 'April', '05': 'May', '06': 'June',
+        '07': 'July', '08': 'August', '09': 'September',
+        '10': 'October', '11': 'November', '12': 'December'
+    };
+    return `${monthNames[month]} ${year}`;
+}
+</script>
 
 </body>
 

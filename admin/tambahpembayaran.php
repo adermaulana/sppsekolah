@@ -13,26 +13,18 @@ if (isset($_POST['simpan'])) {
     $siswa_id = $_POST['siswa_id_221043'];
     $spp_id = $_POST['spp_id_221043'];
     $status = $_POST['status'];
-    $current_year = $_POST['tahun'];
+    $bulan = $_POST['bulan'];
 
-    // Loop through all 12 months
-    for ($month = 1; $month <= 12; $month++) {
-        // Format bulan dengan leading zero (01, 02, etc)
-        $formatted_month = str_pad($month, 2, '0', STR_PAD_LEFT);
-        // Format bulan-tahun (01-2024, 02-2024, etc)
-        $bulan = $formatted_month . '-' . $current_year;
-
-        $simpan = mysqli_query(
-            $koneksi,
-            "INSERT INTO pembayaran_221043 
-            (siswa_id_221043, spp_id_221043, bulan_221043, status_221043) 
-            VALUES ('$siswa_id', '$spp_id', '$bulan', '$status')",
-        );
-    }
+    $simpan = mysqli_query(
+        $koneksi,
+        "INSERT INTO pembayaran_221043 
+        (siswa_id_221043, spp_id_221043, bulan_221043, status_221043) 
+        VALUES ('$siswa_id', '$spp_id', '$bulan', '$status')"
+    );
 
     if ($simpan) {
         echo "<script>
-                alert('Simpan data sukses untuk semua bulan!');
+                alert('Simpan data sukses!');
                 document.location='pembayaran.php';
             </script>";
     } else {
@@ -43,7 +35,6 @@ if (isset($_POST['simpan'])) {
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -205,19 +196,19 @@ if (isset($_POST['simpan'])) {
                                                         name="siswa_id_221043" required>
                                                         <option value="" disabled selected>Pilih</option>
                                                         <?php
-                                        $tampil = mysqli_query($koneksi, "SELECT 
-                                            siswa_221043.*, 
-                                            kelas_221043.kelas_221043 AS nama_kelas,
-                                            spp_221043.biaya_221043 AS biaya_spp,
-                                            spp_221043.id_221043 AS id_spp
-                                        FROM 
-                                            siswa_221043
-                                        JOIN 
-                                            kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043
-                                        JOIN 
-                                            spp_221043 ON kelas_221043.id_221043 = spp_221043.id_kelas_221043");
-                                        while($data = mysqli_fetch_array($tampil)):
-                                        ?>
+                            $tampil = mysqli_query($koneksi, "SELECT 
+                                siswa_221043.*, 
+                                kelas_221043.kelas_221043 AS nama_kelas,
+                                spp_221043.biaya_221043 AS biaya_spp,
+                                spp_221043.id_221043 AS id_spp
+                            FROM 
+                                siswa_221043
+                            JOIN 
+                                kelas_221043 ON siswa_221043.id_kelas_221043 = kelas_221043.id_221043
+                            JOIN 
+                                spp_221043 ON kelas_221043.id_221043 = spp_221043.id_kelas_221043");
+                            while($data = mysqli_fetch_array($tampil)):
+                            ?>
                                                         <option value="<?= $data['id_221043'] ?>"
                                                             data-kelas="<?= $data['nama_kelas'] ?>"
                                                             data-spp="<?= $data['id_spp'] ?>"
@@ -244,11 +235,21 @@ if (isset($_POST['simpan'])) {
                                                 </div>
 
                                                 <div class="form-group">
-                                                    <label for="tahun">Tahun</label>
-                                                    <input type="number" class="form-control" id="tahun"
-                                                        name="tahun" value="<?= date('Y') ?>" min="1900"
-                                                        max="<?= date('Y') ?>">
-                                                    <div id="tahunError" class="error-message">Tahun harus dipilih
+                                                    <label for="bulan">Bulan</label>
+                                                    <select class="form-control" id="bulan" name="bulan"
+                                                        required>
+                                                        <option value="" selected disabled>Pilih Bulan</option>
+                                                        <?php
+                                                        $tahun = date('Y');
+                                                        for ($i = 1; $i <= 12; $i++) {
+                                                            $bulan = str_pad($i, 2, '0', STR_PAD_LEFT);
+                                                            $bulan_tahun = $bulan . '-' . $tahun;
+                                                            $nama_bulan = date('F', mktime(0, 0, 0, $i, 1));
+                                                            echo "<option value='$bulan_tahun'>$nama_bulan $tahun</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+                                                    <div id="bulanError" class="error-message">Bulan harus dipilih
                                                     </div>
                                                 </div>
 
@@ -366,15 +367,14 @@ if (isset($_POST['simpan'])) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const siswa = document.getElementById('siswa_id_221043');
-            const tahun = document.getElementById('tahun');
+            const bulan = document.getElementById('bulan');
             const status = document.getElementById('status');
             const submitButton = document.getElementById('submitButton');
 
             // Error message elements
             const siswaError = document.getElementById('siswaError');
-            const tahunError = document.getElementById('tahunError');
+            const bulanError = document.getElementById('bulanError');
             const statusError = document.getElementById('statusError');
-
 
             // Validation functions
             function validateSiswa() {
@@ -382,64 +382,40 @@ if (isset($_POST['simpan'])) {
                     siswaError.style.display = 'block';
                     return false;
                 }
-
                 siswaError.style.display = 'none';
                 return true;
             }
 
-            function validateTahun() {
-                if (tahun.value.trim() === '') {
-                    tahunError.style.display = 'block';
+            function validateBulan() {
+                if (bulan.value.trim() === '') {
+                    bulanError.style.display = 'block';
                     return false;
                 }
-
-                tahunError.style.display = 'none';
+                bulanError.style.display = 'none';
                 return true;
             }
-
 
             function validateStatus() {
                 if (status.value.trim() === '') {
                     statusError.style.display = 'block';
                     return false;
                 }
-
                 statusError.style.display = 'none';
                 return true;
             }
 
-
             function checkFormValidity() {
                 const isSiswaValid = validateSiswa();
-                const isTahunValid = validateTahun();
+                const isBulanValid = validateBulan();
                 const isStatusValid = validateStatus();
 
-
-                // Enable or disable the submit button based on all validations
-                if (isSiswaValid && isTahunValid && isStatusValid) {
-                    submitButton.disabled = false;
-                } else {
-                    submitButton.disabled = true;
-                }
-
+                submitButton.disabled = !(isSiswaValid && isBulanValid && isStatusValid);
             }
 
-
-            // Real-time validation
-            siswa.addEventListener('input', checkFormValidity);
-            tahun.addEventListener('input', checkFormValidity);
-            status.addEventListener('input', checkFormValidity);
-
-            // Form submission validation
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                checkFormValidity();
-
-                if (!submitButton.disabled) {
-                    form.submit();
-                }
-
-            });
+            // Event listeners
+            siswa.addEventListener('change', checkFormValidity);
+            bulan.addEventListener('change', checkFormValidity);
+            status.addEventListener('change', checkFormValidity);
         });
     </script>
 
